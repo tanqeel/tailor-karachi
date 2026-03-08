@@ -76,6 +76,13 @@ export interface WorkerAdvance {
   note: string;
 }
 
+export interface WorkerPayment {
+  id: string;
+  amount: number;
+  date: string;
+  note: string;
+}
+
 export interface Worker {
   id: string;
   name: string;
@@ -87,6 +94,7 @@ export interface Worker {
   rateSuit: number;
   rateDesign: number;
   advances: WorkerAdvance[];
+  payments: WorkerPayment[];
   active: boolean;
 }
 
