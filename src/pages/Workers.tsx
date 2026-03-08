@@ -6,8 +6,19 @@ import { getWhatsAppLink, getWorkerHisaabMessage } from '@/lib/notifications';
 import type { Worker, WorkerAdvance, WorkerPayment } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote } from 'lucide-react';
+import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote, Scissors, PenTool } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+
+const WORKER_ROLES = [
+  { key: 'cutting', en: 'Cutting', ur: 'کٹنگ', emoji: '✂️' },
+  { key: 'stitching', en: 'Stitching', ur: 'سلائی', emoji: '🧵' },
+  { key: 'finishing', en: 'Finishing', ur: 'فنشنگ', emoji: '✨' },
+  { key: 'pressing', en: 'Pressing / Ironing', ur: 'پریسنگ / استری', emoji: '🔥' },
+  { key: 'design', en: 'Design Work', ur: 'ڈیزائن ورک', emoji: '🎨' },
+  { key: 'embroidery', en: 'Embroidery', ur: 'کڑھائی', emoji: '🪡' },
+  { key: 'master', en: 'Master Tailor', ur: 'ماسٹر درزی', emoji: '👔' },
+  { key: 'helper', en: 'Helper', ur: 'ہیلپر', emoji: '🤝' },
+];
 
 export default function Workers() {
   const { t, isUrdu } = useLang();
@@ -142,7 +153,19 @@ export default function Workers() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{worker.name}</p>
-                  {worker.role && <p className="text-[10px] text-muted-foreground">{worker.role}{worker.experience ? ` · ${worker.experience}` : ''}</p>}
+                  {worker.role && (
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {worker.role.split(',').map(r => {
+                        const preset = WORKER_ROLES.find(p => p.key === r.trim());
+                        return (
+                          <span key={r} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                            {preset ? `${preset.emoji} ${isUrdu ? preset.ur : preset.en}` : r.trim()}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {worker.experience && <p className="text-[10px] text-muted-foreground mt-0.5">{isUrdu ? 'تجربہ' : 'Exp'}: {worker.experience}</p>}
                   <p className="text-xs text-muted-foreground">
                     {activeSuits} {isUrdu ? 'فعال' : 'active'} · {totalCompleted} {isUrdu ? 'مکمل' : 'done'} · Rs {weeklyEarnings.toLocaleString()}/{isUrdu ? 'ہفتہ' : 'wk'}
                   </p>
@@ -187,15 +210,35 @@ export default function Workers() {
                 <label className="text-xs text-muted-foreground font-medium">{t('common.phone')}</label>
                 <VoiceInput value={phone} onChange={setPhone} type="tel" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'کردار' : 'Role'}</label>
-                  <VoiceInput value={role} onChange={setRole} placeholder={isUrdu ? 'مثلاً ماسٹر درزی' : 'e.g. Master Tailor'} />
+              <div>
+                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{isUrdu ? 'کردار (ایک یا زیادہ منتخب کریں)' : 'Roles (select one or more)'}</label>
+                <div className="flex flex-wrap gap-2">
+                  {WORKER_ROLES.map(r => {
+                    const selected = role.split(',').map(s => s.trim()).filter(Boolean).includes(r.key);
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        onClick={() => {
+                          const current = role.split(',').map(s => s.trim()).filter(Boolean);
+                          const next = selected ? current.filter(k => k !== r.key) : [...current, r.key];
+                          setRole(next.join(','));
+                        }}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${
+                          selected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {r.emoji} {isUrdu ? r.ur : r.en}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
-                  <VoiceInput value={experience} onChange={setExperience} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} />
-                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
+                <VoiceInput value={experience} onChange={setExperience} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} />
               </div>
               <div>
                 <h3 className="text-xs text-muted-foreground font-medium mb-2">{isUrdu ? 'ریٹ (فی سوٹ)' : 'Rates (per piece)'}</h3>
