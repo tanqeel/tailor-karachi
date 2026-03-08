@@ -235,6 +235,11 @@ export default function Orders() {
                     <div key={suit.id} className="flex items-center gap-1">
                       <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
                       <StatusBadge status={suit.status} onClick={() => cycleSuitStatus(order.id, suit.id)} />
+                      {suit.location && (suit.location.boxNumber || suit.location.lineNumber || suit.location.khannaNumber) && (
+                        <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                          📦{suit.location.boxNumber && ` B${suit.location.boxNumber}`}{suit.location.lineNumber && ` L${suit.location.lineNumber}`}{suit.location.khannaNumber && ` K${suit.location.khannaNumber}`}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
