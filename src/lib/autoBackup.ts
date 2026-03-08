@@ -170,14 +170,30 @@ export function downloadBackupAsFile(data: AppData): void {
 
 export function importBackupFromFile(file: File): Promise<AppData | null> {
   return new Promise((resolve) => {
+    if (file.size > 50 * 1024 * 1024) {
+      resolve(null);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result as string);
         // Support both direct AppData format and wrapped format
         const appData = parsed.data || parsed;
-        if (appData.customers && appData.orders && appData.workers) {
-          resolve(appData as AppData);
+        if (
+          appData.customers && Array.isArray(appData.customers) &&
+          appData.orders && Array.isArray(appData.orders) &&
+          appData.workers && Array.isArray(appData.workers)
+        ) {
+          // Basic structure validation per item
+          const validCustomers = appData.customers.every((c: any) => c.id && c.name);
+          const validOrders = appData.orders.every((o: any) => o.id && o.customerId && Array.isArray(o.suits));
+          const validWorkers = appData.workers.every((w: any) => w.id && w.name);
+          if (validCustomers && validOrders && validWorkers) {
+            resolve(appData as AppData);
+          } else {
+            resolve(null);
+          }
         } else {
           resolve(null);
         }

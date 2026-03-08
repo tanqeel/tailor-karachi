@@ -5,9 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { DataProvider } from "@/contexts/DataContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import PageTransition from "@/components/PageTransition";
 import TopBar from "@/components/TopBar";
-import InstallPrompt from "@/components/InstallPrompt";
 import BottomNav from "@/components/BottomNav";
+import InstallPrompt from "@/components/InstallPrompt";
 import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import Orders from "@/pages/Orders";
@@ -29,19 +31,21 @@ function AppContent() {
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
       <TopBar />
       <main className="flex-1 px-4 py-4 pb-24">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/workers" element={<Workers />} />
-          <Route path="/measurements" element={<Measurements />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/ready" element={<ReadySuits />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/portal" element={<CustomerPortal />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<PageTransition><Dashboard /></PageTransition>} />
+            <Route path="/customers" element={<PageTransition><Customers /></PageTransition>} />
+            <Route path="/orders" element={<PageTransition><Orders /></PageTransition>} />
+            <Route path="/workers" element={<PageTransition><Workers /></PageTransition>} />
+            <Route path="/measurements" element={<PageTransition><Measurements /></PageTransition>} />
+            <Route path="/payments" element={<PageTransition><Payments /></PageTransition>} />
+            <Route path="/ready" element={<PageTransition><ReadySuits /></PageTransition>} />
+            <Route path="/reports" element={<PageTransition><Reports /></PageTransition>} />
+            <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
+            <Route path="/portal" element={<PageTransition><CustomerPortal /></PageTransition>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
       <BottomNav />
       <InstallPrompt />
