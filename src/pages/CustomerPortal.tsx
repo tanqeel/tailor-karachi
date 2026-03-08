@@ -140,12 +140,11 @@ export default function CustomerPortal() {
             ) : trackResult.orders.map((order: any) => {
               const isDelivered = !!order.deliveredAt;
               const balance = order.totalAmount - order.advancePaid;
-              return (
+               return (
                 <div key={order.id} className={`rounded-xl p-4 border space-y-3 ${isDelivered ? 'bg-success/5 border-success/20' : 'bg-card border-border'}`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-muted-foreground">{isUrdu ? 'ڈیلیوری' : 'Delivery'}: {new Date(order.deadline).toLocaleDateString()}</p>
-                      {order.totalAmount > 0 && <p className="text-xs mt-0.5">{isUrdu ? 'کل' : 'Total'}: Rs {order.totalAmount.toLocaleString()}{balance > 0 && <span className="text-destructive ml-2">{isUrdu ? 'بقایا' : 'Due'}: Rs {balance.toLocaleString()}</span>}</p>}
                     </div>
                     {isDelivered && <span className="text-xs font-bold px-2 py-1 rounded-full bg-success text-success-foreground">✅ {isUrdu ? 'حوالے' : 'Delivered'}</span>}
                   </div>

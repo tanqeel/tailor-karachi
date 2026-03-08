@@ -62,15 +62,15 @@ export function printReceipt({ order, customer, lang, shopName = 'Karachi Tailor
 </head>
 <body>
   <div class="header">
-    <h1>✂️ ${shopName}</h1>
+     <h1>✂️ ${sanitize(shopName)}</h1>
     <p>${isUrdu ? 'رسید / آرڈر سلپ' : 'Order Receipt'}</p>
   </div>
 
   <div class="section">
     <div class="section-title">${isUrdu ? 'گاہک کی تفصیلات' : 'Customer Details'}</div>
-    <div class="row"><span class="label">${isUrdu ? 'نام' : 'Name'}</span><span class="value">${customer.name}</span></div>
-    <div class="row"><span class="label">${isUrdu ? 'آئی ڈی' : 'ID'}</span><span class="value">${customer.customerId}</span></div>
-    ${customer.phone ? `<div class="row"><span class="label">${isUrdu ? 'فون' : 'Phone'}</span><span class="value">${customer.phone}</span></div>` : ''}
+    <div class="row"><span class="label">${isUrdu ? 'نام' : 'Name'}</span><span class="value">${sanitize(customer.name)}</span></div>
+    <div class="row"><span class="label">${isUrdu ? 'آئی ڈی' : 'ID'}</span><span class="value">${sanitize(customer.customerId)}</span></div>
+    ${customer.phone ? `<div class="row"><span class="label">${isUrdu ? 'فون' : 'Phone'}</span><span class="value">${sanitize(customer.phone)}</span></div>` : ''}
     <div class="row"><span class="label">${isUrdu ? 'تاریخ' : 'Date'}</span><span class="value">${new Date(order.createdAt).toLocaleDateString()}</span></div>
     <div class="row"><span class="label">${isUrdu ? 'ڈیڈ لائن' : 'Deadline'}</span><span class="value">${new Date(order.deadline).toLocaleDateString()}</span></div>
   </div>
@@ -79,16 +79,16 @@ export function printReceipt({ order, customer, lang, shopName = 'Karachi Tailor
   <div class="section">
     <div class="section-title">${isUrdu ? 'ناپ' : 'Measurements'}</div>
     <div class="measurements">
-      ${measurementRows.map(r => `<div class="row"><span class="label">${r.label}</span><span class="value">${r.value}</span></div>`).join('')}
+       ${measurementRows.map(r => `<div class="row"><span class="label">${r.label}</span><span class="value">${sanitize(String(r.value))}</span></div>`).join('')}
     </div>
-    ${m.notes ? `<div style="margin-top:6px;font-size:11px;color:#666;">${isUrdu ? 'نوٹس' : 'Notes'}: ${m.notes}</div>` : ''}
+    ${m.notes ? `<div style="margin-top:6px;font-size:11px;color:#666;">${isUrdu ? 'نوٹس' : 'Notes'}: ${sanitize(m.notes)}</div>` : ''}
   </div>` : ''}
 
   <div class="section">
     <div class="section-title">${isUrdu ? 'سوٹ کی تفصیلات' : 'Suit Details'}</div>
     <table class="suits-table">
       <tr><th>#</th><th>${isUrdu ? 'قسم' : 'Type'}</th><th>${isUrdu ? 'ڈیزائن' : 'Design'}</th><th>${isUrdu ? 'حالت' : 'Status'}</th></tr>
-      ${order.suits.map((s, i) => `<tr><td>${i + 1}</td><td>${suitTypes[s.type] || s.type}</td><td>${s.designWork ? '✓' : '—'}</td><td>${s.status}</td></tr>`).join('')}
+      ${order.suits.map((s, i) => `<tr><td>${i + 1}</td><td>${sanitize(suitTypes[s.type] || s.type)}</td><td>${s.designWork ? '✓' : '—'}</td><td>${sanitize(s.status)}</td></tr>`).join('')}
     </table>
   </div>
 
