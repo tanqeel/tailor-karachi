@@ -510,48 +510,16 @@ export default function Settings() {
         </div>
       </button>
 
-      {/* Export */}
-      <button onClick={() => exportBackup(data)} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-success/10"><Download size={22} className="text-success" /></div>
+      {/* Backup & Restore */}
+      <button onClick={() => setActiveSection('backup')} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
+        <div className="p-3 rounded-xl bg-success/10"><Shield size={22} className="text-success" /></div>
         <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ ڈاؤنلوڈ' : 'Export Backup'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'JSON فائل میں ڈیٹا محفوظ کریں' : 'Save data as JSON file'}</p>
+          <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ اور بحالی' : 'Backup & Restore'}</p>
+          <p className="text-xs text-muted-foreground">
+            {backups.length} {isUrdu ? 'بیک اپ' : 'backups'} · {autoBackup ? (isUrdu ? 'خودکار فعال' : 'Auto ON') : (isUrdu ? 'خودکار غیر فعال' : 'Auto OFF')}
+          </p>
         </div>
       </button>
-
-      {/* Import */}
-      <button onClick={() => fileRef.current?.click()} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-info/10"><Upload size={22} className="text-info" /></div>
-        <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ بحال کریں' : 'Import Backup'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'JSON فائل سے ڈیٹا بحال کریں' : 'Restore from JSON'}</p>
-        </div>
-      </button>
-      <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-
-      {/* Auto Backups */}
-      <button onClick={() => setShowBackups(!showBackups)} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-warning/10"><Database size={22} className="text-warning" /></div>
-        <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'خودکار بیک اپ' : 'Auto Backups'}</p>
-          <p className="text-xs text-muted-foreground">{backups.length} {isUrdu ? 'بیک اپ محفوظ' : 'backups saved'}</p>
-        </div>
-      </button>
-      {showBackups && backups.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-4 space-y-2">
-          {backups.map(b => (
-            <div key={b.key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-              <div>
-                <p className="text-sm font-medium">{b.date}</p>
-                <p className="text-[10px] text-muted-foreground">{new Date(b.timestamp).toLocaleString()}</p>
-              </div>
-              <button onClick={() => handleRestore(b.key)} className="px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold touch-target active:scale-95">
-                <RotateCcw size={14} className="inline mr-1" /> {isUrdu ? 'بحال' : 'Restore'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Clear All */}
       <button onClick={() => setShowClear(true)} className="w-full bg-card rounded-xl p-4 border border-destructive/30 flex items-center gap-4 active:scale-[0.98] transition-transform">
