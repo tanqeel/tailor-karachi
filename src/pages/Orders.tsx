@@ -4,9 +4,10 @@ import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
 import type { Order, OrderSuit, SuitStatus } from '@/lib/store';
 import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
+import { printReceipt } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, MessageCircle } from 'lucide-react';
+import { Plus, X, MessageCircle, Printer } from 'lucide-react';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
 
@@ -90,6 +91,12 @@ export default function Orders() {
     updateOrder(orderId, { suits: newSuits, deliveredAt: allDelivered ? new Date().toISOString() : undefined });
   };
 
+  const handlePrint = (order: Order) => {
+    const customer = data.customers.find(c => c.id === order.customerId);
+    if (!customer) return;
+    printReceipt({ order, customer, lang });
+  };
+
   return (
     <div className="space-y-4 pb-4">
       <SearchBar value={search} onChange={setSearch} />
@@ -138,28 +145,34 @@ export default function Orders() {
                     </div>
                   ))}
                 </div>
-                {customer?.phone && (
-                  <div className="flex gap-2">
-                    {(dlStatus === 'overdue' || dlStatus === 'urgent' || dlStatus === 'approaching') && (
-                      <a href={getWhatsAppLink(customer.phone, getDeadlineReminderMessage(customer.name, order.deadline, lang))} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
-                        <MessageCircle size={12} /> {lang === 'ur' ? 'یاد دہانی' : 'Reminder'}
-                      </a>
-                    )}
-                    {order.suits.every(s => s.status === 'ready' || s.status === 'delivered') && !order.deliveredAt && (
-                      <a href={getWhatsAppLink(customer.phone, getReadyForPickupMessage(customer.name, lang))} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
-                        <MessageCircle size={12} /> {lang === 'ur' ? 'تیار پیغام' : 'Ready Msg'}
-                      </a>
-                    )}
-                    {balance > 0 && (
-                      <a href={getWhatsAppLink(customer.phone, getPaymentReminderMessage(customer.name, balance, lang))} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/10 text-warning text-[10px] font-semibold active:scale-95 transition-transform">
-                        <MessageCircle size={12} /> {lang === 'ur' ? 'بقایا' : 'Payment'}
-                      </a>
-                    )}
-                  </div>
-                )}
+                <div className="flex gap-2 flex-wrap">
+                  {/* Print Receipt */}
+                  <button onClick={() => handlePrint(order)} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold active:scale-95 transition-transform">
+                    <Printer size={12} /> {lang === 'ur' ? 'رسید' : 'Receipt'}
+                  </button>
+                  {customer?.phone && (
+                    <>
+                      {(dlStatus === 'overdue' || dlStatus === 'urgent' || dlStatus === 'approaching') && (
+                        <a href={getWhatsAppLink(customer.phone, getDeadlineReminderMessage(customer.name, order.deadline, lang))} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
+                          <MessageCircle size={12} /> {lang === 'ur' ? 'یاد دہانی' : 'Reminder'}
+                        </a>
+                      )}
+                      {order.suits.every(s => s.status === 'ready' || s.status === 'delivered') && !order.deliveredAt && (
+                        <a href={getWhatsAppLink(customer.phone, getReadyForPickupMessage(customer.name, lang))} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
+                          <MessageCircle size={12} /> {lang === 'ur' ? 'تیار پیغام' : 'Ready Msg'}
+                        </a>
+                      )}
+                      {balance > 0 && (
+                        <a href={getWhatsAppLink(customer.phone, getPaymentReminderMessage(customer.name, balance, lang))} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/10 text-warning text-[10px] font-semibold active:scale-95 transition-transform">
+                          <MessageCircle size={12} /> {lang === 'ur' ? 'بقایا' : 'Payment'}
+                        </a>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           );

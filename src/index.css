@@ -52,6 +52,52 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .dark {
+    --background: 160 20% 8%;
+    --foreground: 150 10% 92%;
+
+    --card: 160 15% 12%;
+    --card-foreground: 150 10% 92%;
+
+    --popover: 160 15% 12%;
+    --popover-foreground: 150 10% 92%;
+
+    --primary: 160 55% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 42 70% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 160 15% 18%;
+    --muted-foreground: 150 10% 55%;
+
+    --accent: 42 70% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 160 12% 20%;
+    --input: 160 12% 20%;
+    --ring: 160 55% 38%;
+
+    --success: 142 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 10%;
+    --info: 210 75% 58%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 160 15% 10%;
+    --sidebar-foreground: 150 10% 90%;
+    --sidebar-primary: 150 10% 92%;
+    --sidebar-primary-foreground: 160 20% 8%;
+    --sidebar-accent: 160 15% 16%;
+    --sidebar-accent-foreground: 150 10% 92%;
+    --sidebar-border: 160 12% 18%;
+    --sidebar-ring: 160 55% 38%;
+  }
 }
 
 @layer base {
@@ -80,3 +126,11 @@
   .status-ready { @apply bg-success text-success-foreground; }
   .status-delivered { @apply bg-muted text-muted-foreground; }
 }
+
+/* Print styles */
+@media print {
+  body { background: white !important; color: black !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+}
+.print-only { display: none; }
