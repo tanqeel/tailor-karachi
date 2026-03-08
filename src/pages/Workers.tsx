@@ -153,7 +153,19 @@ export default function Workers() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{worker.name}</p>
-                  {worker.role && <p className="text-[10px] text-muted-foreground">{worker.role}{worker.experience ? ` · ${worker.experience}` : ''}</p>}
+                  {worker.role && (
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {worker.role.split(',').map(r => {
+                        const preset = WORKER_ROLES.find(p => p.key === r.trim());
+                        return (
+                          <span key={r} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                            {preset ? `${preset.emoji} ${isUrdu ? preset.ur : preset.en}` : r.trim()}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {worker.experience && <p className="text-[10px] text-muted-foreground mt-0.5">{isUrdu ? 'تجربہ' : 'Exp'}: {worker.experience}</p>}
                   <p className="text-xs text-muted-foreground">
                     {activeSuits} {isUrdu ? 'فعال' : 'active'} · {totalCompleted} {isUrdu ? 'مکمل' : 'done'} · Rs {weeklyEarnings.toLocaleString()}/{isUrdu ? 'ہفتہ' : 'wk'}
                   </p>
