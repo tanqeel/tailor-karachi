@@ -80,6 +80,8 @@ export interface Worker {
   id: string;
   name: string;
   phone: string;
+  role: string;
+  experience: string;
   rateKameez: number;
   rateShalwar: number;
   rateSuit: number;
