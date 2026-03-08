@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { emptyMeasurements, generateId } from '@/lib/store';
+import { cleanInput } from '@/lib/validation';
 import { loadShopSettings, loadGalleryImages, loadReviews } from '@/lib/shopSettings';
 import type { Measurements } from '@/lib/store';
 import StatusBadge from '@/components/StatusBadge';
@@ -83,26 +84,31 @@ export default function CustomerPortal() {
   };
 
   const handleOrderSubmit = () => {
-    if (!orderName.trim() || !orderPhone.trim()) return;
-    let customer = data.customers.find(c => c.phone === orderPhone.trim());
+    const safeName = cleanInput(orderName, 100);
+    const safePhone = cleanInput(orderPhone, 20);
+    const safeNotes = cleanInput(orderNotes, 500);
+    if (!safeName || !safePhone) return;
+    let customer = data.customers.find(c => c.phone === safePhone);
     if (!customer) {
-      addCustomer({ name: orderName, phone: orderPhone, address: '', measurements: emptyMeasurements });
+      addCustomer({ name: safeName, phone: safePhone, address: '', measurements: emptyMeasurements });
       customer = data.customers[data.customers.length - 1];
     }
     if (customer) {
       addOrder({
         customerId: customer.id, deadline: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-        totalAmount: 0, advancePaid: 0, paymentStatus: 'pending', notes: `[Online] ${orderNotes}`.trim(), paymentHistory: [],
-        suits: [{ id: generateId(), status: 'received', type: orderType as any, designWork: orderDesign, notes: orderNotes, statusHistory: [{ status: 'received' as const, timestamp: new Date().toISOString() }] }],
+        totalAmount: 0, advancePaid: 0, paymentStatus: 'pending', notes: `[Online] ${safeNotes}`.trim(), paymentHistory: [],
+        suits: [{ id: generateId(), status: 'received', type: orderType as any, designWork: orderDesign, notes: safeNotes, statusHistory: [{ status: 'received' as const, timestamp: new Date().toISOString() }] }],
       });
     }
     setOrderSubmitted(true);
   };
 
   const handleMeasSubmit = () => {
-    if (!measName.trim() || !measPhone.trim()) return;
-    const existing = data.customers.find(c => c.phone === measPhone.trim());
-    if (!existing) addCustomer({ name: measName, phone: measPhone, address: '', measurements });
+    const safeName = cleanInput(measName, 100);
+    const safePhone = cleanInput(measPhone, 20);
+    if (!safeName || !safePhone) return;
+    const existing = data.customers.find(c => c.phone === safePhone);
+    if (!existing) addCustomer({ name: safeName, phone: safePhone, address: '', measurements });
     setMeasSubmitted(true);
   };
 
