@@ -239,7 +239,6 @@ export default function Workers() {
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
                 <VoiceInput value={experience} onChange={setExperience} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} />
-                </div>
               </div>
               <div>
                 <h3 className="text-xs text-muted-foreground font-medium mb-2">{isUrdu ? 'ریٹ (فی سوٹ)' : 'Rates (per piece)'}</h3>
