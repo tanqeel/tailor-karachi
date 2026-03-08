@@ -259,8 +259,13 @@ function MeasurementDisplay({ m, isUrdu }: { m: Measurements; isUrdu: boolean })
     { label: isUrdu ? 'کالر' : 'Collar', value: m.collar },
     { label: isUrdu ? 'تیرا' : 'Teera', value: m.teera },
     { label: isUrdu ? 'کمر' : 'Kamar', value: m.kamar },
+    { label: isUrdu ? 'دامن' : 'Daman', value: m.daman },
+    { label: isUrdu ? 'کف' : 'Cuff', value: m.cuff },
+    { label: isUrdu ? 'جیب' : 'Pocket', value: m.frontPocket },
     { label: isUrdu ? 'شلوار' : 'Shalwar', value: m.shalwarLength },
     { label: isUrdu ? 'پونچا' : 'Pooncha', value: m.pancha },
+    { label: isUrdu ? 'کمر' : 'Waist', value: m.waist },
+    { label: isUrdu ? 'ہپ' : 'Hip', value: m.hip },
   ].filter(i => i.value);
 
   if (items.length === 0) return <p className="text-xs text-muted-foreground">{isUrdu ? 'خالی' : 'Empty'}</p>;
