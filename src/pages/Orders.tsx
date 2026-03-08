@@ -3,9 +3,10 @@ import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
 import type { Order, OrderSuit, SuitStatus } from '@/lib/store';
+import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Calendar, DollarSign } from 'lucide-react';
+import { Plus, X, MessageCircle } from 'lucide-react';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
 
