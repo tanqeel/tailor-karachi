@@ -80,6 +80,8 @@ export interface Worker {
   id: string;
   name: string;
   phone: string;
+  role: string;
+  experience: string;
   rateKameez: number;
   rateShalwar: number;
   rateSuit: number;
@@ -120,6 +122,17 @@ export function loadData(): AppData {
           ...s,
           statusHistory: s.statusHistory || [{ status: s.status, timestamp: o.createdAt }],
         })),
+      }));
+      // Migrate old workers without role/experience
+      data.workers = (data.workers || []).map((w: any) => ({
+        ...w,
+        role: w.role || '',
+        experience: w.experience || '',
+      }));
+      // Migrate old orders without notes
+      data.orders = data.orders.map((o: any) => ({
+        ...o,
+        notes: o.notes || '',
       }));
       return data;
     }
