@@ -4,8 +4,23 @@ import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
 import { listBackups, restoreBackup } from '@/lib/autoBackup';
 import type { AppData } from '@/lib/store';
-import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw } from 'lucide-react';
-import { useRef } from 'react';
+import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('kt-theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('kt-theme', dark ? 'dark' : 'light');
+  }, [dark]);
+
+  return { dark, toggle: () => setDark(p => !p) };
+}
 
 export default function Settings() {
   const { lang, toggleLang, isUrdu } = useLang();
@@ -14,6 +29,7 @@ export default function Settings() {
   const [showBackups, setShowBackups] = useState(false);
   const [showClear, setShowClear] = useState(false);
   const backups = listBackups();
+  const theme = useTheme();
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,6 +66,20 @@ export default function Settings() {
         <Settings2 size={22} className="text-primary" />
         <h2 className="text-lg font-bold">{isUrdu ? 'ترتیبات' : 'Settings'}</h2>
       </div>
+
+      {/* Dark Mode Toggle */}
+      <button onClick={theme.toggle} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
+        <div className="p-3 rounded-xl bg-muted">
+          {theme.dark ? <Moon size={22} className="text-info" /> : <Sun size={22} className="text-warning" />}
+        </div>
+        <div className="flex-1 text-left">
+          <p className="font-semibold text-sm">{isUrdu ? 'ڈارک / لائٹ موڈ' : 'Dark / Light Mode'}</p>
+          <p className="text-xs text-muted-foreground">{theme.dark ? (isUrdu ? 'ڈارک موڈ فعال' : 'Dark mode active') : (isUrdu ? 'لائٹ موڈ فعال' : 'Light mode active')}</p>
+        </div>
+        <div className={`w-12 h-7 rounded-full relative transition-colors ${theme.dark ? 'bg-primary' : 'bg-muted'}`}>
+          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-card shadow transition-transform ${theme.dark ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        </div>
+      </button>
 
       {/* Language */}
       <button onClick={toggleLang} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">

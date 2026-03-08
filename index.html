@@ -3,20 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <title>Karachi Tailors - Tailoring Shop Management</title>
+    <meta name="description" content="Karachi Tailors - Offline-first tailoring shop management PWA with order tracking, measurements, and worker management." />
+    <meta name="author" content="Karachi Tailors" />
+    <meta property="og:title" content="Karachi Tailors" />
+    <meta property="og:description" content="Offline-first tailoring shop management app" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="theme-color" content="#1a6b4a" />
+    <script>
+      // Apply saved theme before render to prevent flash
+      const t = localStorage.getItem('kt-theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
   </head>
 
   <body>
