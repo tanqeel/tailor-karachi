@@ -9,6 +9,11 @@ const translations: Record<string, Record<Lang, string>> = {
   'nav.orders': { en: 'Orders', ur: 'آرڈرز' },
   'nav.workers': { en: 'Workers', ur: 'کاریگر' },
   'nav.portal': { en: 'Portal', ur: 'پورٹل' },
+  'nav.measurements': { en: 'Measurements', ur: 'ناپ' },
+  'nav.payments': { en: 'Payments', ur: 'ادائیگیاں' },
+  'nav.ready': { en: 'Ready Suits', ur: 'تیار سوٹ' },
+  'nav.reports': { en: 'Reports', ur: 'رپورٹس' },
+  'nav.settings': { en: 'Settings', ur: 'ترتیبات' },
   'dashboard.today': { en: "Today's Orders", ur: 'آج کے آرڈرز' },
   'dashboard.urgent': { en: 'Urgent Deadlines', ur: 'فوری ڈیڈ لائنز' },
   'dashboard.pending': { en: 'Pending Payments', ur: 'بقایا ادائیگیاں' },
@@ -79,7 +84,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('kt-lang') as Lang) || 'en');
+  const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('kt-lang') as Lang) || 'ur');
 
   const toggleLang = useCallback(() => {
     setLang(prev => {
