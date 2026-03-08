@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
-import type { Order, OrderSuit, SuitStatus, StatusChange } from '@/lib/store';
+import type { Order, OrderSuit, SuitStatus, StatusChange, SuitLocation } from '@/lib/store';
 import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
 import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, MessageCircle, Printer, Clock, Filter } from 'lucide-react';
+import { Plus, X, MessageCircle, Printer, Clock, Filter, Package, MapPin } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
