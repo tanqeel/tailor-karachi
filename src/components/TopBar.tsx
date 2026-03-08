@@ -3,7 +3,7 @@ import { Languages, Download, Upload, Mic, MicOff } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
 import { useRef } from 'react';
-import type { AppData } from '@/lib/store';
+import { validateBackupData } from '@/lib/validation';
 import { useVoice } from '@/hooks/useVoice';
 import { parseVoiceCommand } from '@/lib/voiceCommands';
 import { useNavigate } from 'react-router-dom';
@@ -18,14 +18,25 @@ export default function TopBar() {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error(isUrdu ? 'فائل بہت بڑی ہے (حد 50MB)' : 'File too large (max 50MB)');
+      e.target.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const imported: AppData = JSON.parse(reader.result as string);
-        if (imported.customers && imported.orders && imported.workers) {
-          setData(imported);
+        const parsed = JSON.parse(reader.result as string);
+        const result = validateBackupData(parsed);
+        if (result.valid && result.data) {
+          setData(result.data);
+          toast.success(isUrdu ? 'ڈیٹا درآمد ہو گیا!' : 'Data imported successfully!');
+        } else {
+          toast.error(isUrdu ? `غلط فائل: ${result.error}` : `Invalid file: ${result.error}`);
         }
-      } catch {}
+      } catch {
+        toast.error(isUrdu ? 'فائل پڑھنے میں خرابی' : 'Failed to parse file');
+      }
     };
     reader.readAsText(file);
     e.target.value = '';
