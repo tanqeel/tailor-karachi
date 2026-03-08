@@ -2,7 +2,7 @@ import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import StatusBadge from '@/components/StatusBadge';
 import { getWhatsAppLink, getReadyForPickupMessage } from '@/lib/notifications';
-import { CheckCircle, MessageCircle, Package } from 'lucide-react';
+import { CheckCircle, MessageCircle, Package, MapPin } from 'lucide-react';
 
 export default function ReadySuits() {
   const { t, lang, isUrdu } = useLang();
@@ -52,9 +52,19 @@ export default function ReadySuits() {
 
                 <div className="flex flex-wrap gap-2">
                   {order.suits.map((suit, i) => (
-                    <div key={suit.id} className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
-                      <StatusBadge status={suit.status} />
+                    <div key={suit.id} className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
+                        <StatusBadge status={suit.status} />
+                      </div>
+                      {suit.location && (suit.location.box || suit.location.line || suit.location.khanna) && (
+                        <div className="flex items-center gap-1 text-[9px] text-muted-foreground ml-3 bg-muted/50 rounded px-1.5 py-0.5">
+                          <MapPin size={8} />
+                          {suit.location.box && <span>{isUrdu ? 'باکس' : 'Box'}: {suit.location.box}</span>}
+                          {suit.location.line && <span>{isUrdu ? 'لائن' : 'Line'}: {suit.location.line}</span>}
+                          {suit.location.khanna && <span>{isUrdu ? 'خانہ' : 'Khanna'}: {suit.location.khanna}</span>}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
