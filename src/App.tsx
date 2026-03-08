@@ -11,6 +11,11 @@ import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import Orders from "@/pages/Orders";
 import Workers from "@/pages/Workers";
+import Measurements from "@/pages/Measurements";
+import Payments from "@/pages/Payments";
+import ReadySuits from "@/pages/ReadySuits";
+import Reports from "@/pages/Reports";
+import SettingsPage from "@/pages/Settings";
 import CustomerPortal from "@/pages/CustomerPortal";
 import NotFound from "./pages/NotFound";
 import { useNotificationChecker } from "@/hooks/useNotificationChecker";
@@ -28,6 +33,11 @@ function AppContent() {
           <Route path="/customers" element={<Customers />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/workers" element={<Workers />} />
+          <Route path="/measurements" element={<Measurements />} />
+          <Route path="/payments" element={<Payments />} />
+          <Route path="/ready" element={<ReadySuits />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/portal" element={<CustomerPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

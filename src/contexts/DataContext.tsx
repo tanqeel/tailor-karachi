@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { AppData, loadData, saveData, Customer, Order, Worker, generateId, generateCustomerId, emptyMeasurements } from '@/lib/store';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { AppData, Customer, Order, Worker, generateId, generateCustomerId, emptyMeasurements } from '@/lib/store';
+import { loadDataFromDB, saveDataToDB } from '@/lib/db';
 
 interface DataContextType {
   data: AppData;
+  loading: boolean;
   addCustomer: (c: Omit<Customer, 'id' | 'customerId' | 'createdAt'>) => Customer;
   updateCustomer: (id: string, c: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
@@ -18,9 +20,14 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | null>(null);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [data, _setData] = useState<AppData>(loadData);
+  const [data, _setData] = useState<AppData>({ customers: [], orders: [], workers: [] });
+  const [loading, setLoading] = useState(true);
 
-  const persist = useCallback((d: AppData) => { _setData(d); saveData(d); }, []);
+  useEffect(() => {
+    loadDataFromDB().then(d => { _setData(d); setLoading(false); });
+  }, []);
+
+  const persist = useCallback((d: AppData) => { _setData(d); saveDataToDB(d); }, []);
 
   const addCustomer = useCallback((c: Omit<Customer, 'id' | 'customerId' | 'createdAt'>) => {
     const customer: Customer = {
@@ -75,7 +82,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <DataContext.Provider value={{
-      data, addCustomer, updateCustomer, deleteCustomer,
+      data, loading, addCustomer, updateCustomer, deleteCustomer,
       addOrder, updateOrder, deleteOrder,
       addWorker, updateWorker, deleteWorker, setData,
     }}>

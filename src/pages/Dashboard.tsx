@@ -1,77 +1,86 @@
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, getWorkerEarnings } from '@/lib/store';
-import StatusBadge from '@/components/StatusBadge';
-import { ClipboardList, AlertTriangle, DollarSign, Wrench, Clock, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Users, ClipboardList, Wrench, Ruler, DollarSign, Package, BarChart3, Settings2, Globe, AlertTriangle, Clock } from 'lucide-react';
+
+const quickLinks = [
+  { path: '/customers', icon: Users, key: 'nav.customers', color: 'bg-primary/10 text-primary' },
+  { path: '/orders', icon: ClipboardList, key: 'nav.orders', color: 'bg-info/10 text-info' },
+  { path: '/measurements', icon: Ruler, key: 'nav.measurements', color: 'bg-accent/10 text-accent' },
+  { path: '/workers', icon: Wrench, key: 'nav.workers', color: 'bg-warning/10 text-warning' },
+  { path: '/payments', icon: DollarSign, key: 'nav.payments', color: 'bg-destructive/10 text-destructive' },
+  { path: '/ready', icon: Package, key: 'nav.ready', color: 'bg-success/10 text-success' },
+  { path: '/reports', icon: BarChart3, key: 'nav.reports', color: 'bg-info/10 text-info' },
+  { path: '/portal', icon: Globe, key: 'nav.portal', color: 'bg-primary/10 text-primary' },
+  { path: '/settings', icon: Settings2, key: 'nav.settings', color: 'bg-muted text-muted-foreground' },
+];
 
 export default function Dashboard() {
-  const { t } = useLang();
-  const { data } = useData();
+  const { t, isUrdu } = useLang();
+  const { data, loading } = useData();
   const navigate = useNavigate();
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-20"><div className="animate-pulse-soft text-primary text-lg font-semibold">{isUrdu ? 'لوڈ ہو رہا ہے...' : 'Loading...'}</div></div>;
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const todayOrders = data.orders.filter(o => o.createdAt.slice(0, 10) === today);
-
   const activeOrders = data.orders.filter(o => !o.deliveredAt);
   const urgentOrders = activeOrders.filter(o => {
     const s = getDeadlineStatus(o.deadline);
     return s === 'overdue' || s === 'urgent';
   });
-  const approachingOrders = activeOrders.filter(o => getDeadlineStatus(o.deadline) === 'approaching');
-
   const pendingPayments = data.orders.filter(o => o.paymentStatus !== 'paid' && !o.deliveredAt);
   const totalPending = pendingPayments.reduce((sum, o) => sum + (o.totalAmount - o.advancePaid), 0);
+  const readySuits = data.orders.filter(o => !o.deliveredAt && o.suits.some(s => s.status === 'ready' || s.status === 'packed'));
 
   return (
     <div className="space-y-4 pb-4">
-      {/* Stats Grid */}
+      {/* Stats Row */}
       <div className="grid grid-cols-2 gap-3">
         <button onClick={() => navigate('/orders')} className="bg-card rounded-xl p-4 border border-border text-left active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <ClipboardList size={18} className="text-primary" />
-            </div>
-          </div>
           <p className="text-2xl font-bold">{todayOrders.length}</p>
           <p className="text-xs text-muted-foreground">{t('dashboard.today')}</p>
         </button>
-
         <button onClick={() => navigate('/orders')} className="bg-card rounded-xl p-4 border border-border text-left active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-destructive/10">
-              <AlertTriangle size={18} className="text-destructive" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold">{urgentOrders.length}</p>
+          <p className="text-2xl font-bold text-destructive">{urgentOrders.length}</p>
           <p className="text-xs text-muted-foreground">{t('dashboard.urgent')}</p>
         </button>
-
-        <button onClick={() => navigate('/orders')} className="bg-card rounded-xl p-4 border border-border text-left active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-warning/10">
-              <DollarSign size={18} className="text-warning" />
-            </div>
-          </div>
+        <button onClick={() => navigate('/payments')} className="bg-card rounded-xl p-4 border border-border text-left active:scale-[0.98] transition-transform">
           <p className="text-2xl font-bold">Rs {totalPending.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground">{t('dashboard.pending')}</p>
         </button>
-
-        <button onClick={() => navigate('/workers')} className="bg-card rounded-xl p-4 border border-border text-left active:scale-[0.98] transition-transform">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-info/10">
-              <Wrench size={18} className="text-info" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold">{data.workers.filter(w => w.active).length}</p>
-          <p className="text-xs text-muted-foreground">{t('dashboard.workers')}</p>
+        <button onClick={() => navigate('/ready')} className="bg-card rounded-xl p-4 border border-border text-left active:scale-[0.98] transition-transform">
+          <p className="text-2xl font-bold text-success">{readySuits.length}</p>
+          <p className="text-xs text-muted-foreground">{isUrdu ? 'تیار سوٹ' : 'Ready Suits'}</p>
         </button>
+      </div>
+
+      {/* Quick Access Grid */}
+      <div>
+        <h3 className="font-semibold text-sm mb-3 text-muted-foreground">{isUrdu ? 'فوری رسائی' : 'Quick Access'}</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {quickLinks.map(item => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className="bg-card rounded-xl p-4 border border-border flex flex-col items-center gap-2 active:scale-[0.98] transition-transform touch-target"
+            >
+              <div className={`p-3 rounded-xl ${item.color}`}>
+                <item.icon size={24} />
+              </div>
+              <span className="text-xs font-medium text-center">{t(item.key)}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Urgent Deadlines */}
       {urgentOrders.length > 0 && (
         <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-4">
-          <h3 className="font-semibold text-destructive flex items-center gap-2 mb-3">
+          <h3 className="font-semibold text-destructive flex items-center gap-2 mb-3 text-sm">
             <AlertTriangle size={16} /> {t('dashboard.urgent')}
           </h3>
           <div className="space-y-2">
@@ -84,82 +93,9 @@ export default function Dashboard() {
                     <p className="font-medium text-sm">{customer?.name || 'Unknown'}</p>
                     <p className="text-xs text-muted-foreground">{customer?.customerId}</p>
                   </div>
-                  <div className="text-right">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${status === 'overdue' ? 'bg-destructive text-destructive-foreground' : 'bg-warning text-warning-foreground'}`}>
-                      {status === 'overdue' ? '⚠️ OVERDUE' : '🔥 TODAY'}
-                    </span>
-                    <p className="text-xs text-muted-foreground mt-1">{new Date(order.deadline).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Approaching */}
-      {approachingOrders.length > 0 && (
-        <div className="bg-warning/5 border border-warning/20 rounded-xl p-4">
-          <h3 className="font-semibold text-warning flex items-center gap-2 mb-3">
-            <Clock size={16} /> Approaching Deadlines
-          </h3>
-          <div className="space-y-2">
-            {approachingOrders.slice(0, 3).map(order => {
-              const customer = data.customers.find(c => c.id === order.customerId);
-              return (
-                <div key={order.id} className="flex items-center justify-between bg-card rounded-lg p-3">
-                  <div>
-                    <p className="font-medium text-sm">{customer?.name}</p>
-                    <p className="text-xs text-muted-foreground">{order.suits.length} suits</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{new Date(order.deadline).toLocaleDateString()}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Pending Payments */}
-      {pendingPayments.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-4">
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <DollarSign size={16} className="text-warning" /> {t('dashboard.pending')}
-          </h3>
-          <div className="space-y-2">
-            {pendingPayments.slice(0, 5).map(order => {
-              const customer = data.customers.find(c => c.id === order.customerId);
-              return (
-                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
-                    <p className="font-medium text-sm">{customer?.name}</p>
-                    <p className="text-xs text-muted-foreground">{customer?.customerId}</p>
-                  </div>
-                  <p className="font-bold text-sm text-destructive">Rs {(order.totalAmount - order.advancePaid).toLocaleString()}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Worker Activity */}
-      {data.workers.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-4">
-          <h3 className="font-semibold flex items-center gap-2 mb-3">
-            <TrendingUp size={16} className="text-primary" /> {t('dashboard.workers')}
-          </h3>
-          <div className="space-y-2">
-            {data.workers.filter(w => w.active).map(worker => {
-              const dailyEarnings = getWorkerEarnings(worker, data.orders, 'daily');
-              const assignedSuits = data.orders.flatMap(o => o.suits).filter(s => s.workerId === worker.id && s.status !== 'delivered').length;
-              return (
-                <div key={worker.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
-                    <p className="font-medium text-sm">{worker.name}</p>
-                    <p className="text-xs text-muted-foreground">{assignedSuits} active suits</p>
-                  </div>
-                  <p className="text-sm font-semibold text-primary">Rs {dailyEarnings.toLocaleString()}/day</p>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${status === 'overdue' ? 'bg-destructive text-destructive-foreground' : 'bg-warning text-warning-foreground'}`}>
+                    {status === 'overdue' ? (isUrdu ? '⚠️ اوور ڈیو' : '⚠️ OVERDUE') : (isUrdu ? '🔥 آج' : '🔥 TODAY')}
+                  </span>
                 </div>
               );
             })}
@@ -169,15 +105,13 @@ export default function Dashboard() {
 
       {/* Empty state */}
       {data.orders.length === 0 && data.customers.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-8">
           <div className="text-5xl mb-4">✂️</div>
-          <p className="text-lg font-semibold mb-2">Welcome to Karachi Tailors!</p>
-          <p className="text-sm text-muted-foreground mb-6">Start by adding customers and creating orders</p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => navigate('/customers')} className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold touch-target active:scale-95 transition-transform">
-              + Add Customer
-            </button>
-          </div>
+          <p className="text-lg font-semibold mb-2">{isUrdu ? 'کراچی ٹیلرز میں خوش آمدید!' : 'Welcome to Karachi Tailors!'}</p>
+          <p className="text-sm text-muted-foreground mb-6">{isUrdu ? 'گاہک شامل کر کے شروع کریں' : 'Start by adding customers and creating orders'}</p>
+          <button onClick={() => navigate('/customers')} className="px-8 py-4 bg-primary text-primary-foreground rounded-xl font-semibold text-base touch-target active:scale-95 transition-transform">
+            {isUrdu ? '+ گاہک شامل کریں' : '+ Add Customer'}
+          </button>
         </div>
       )}
     </div>
