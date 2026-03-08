@@ -520,42 +520,104 @@ export default function Workers() {
       })()}
 
       {/* Work History Modal */}
-      {showHistory && (
+      {showHistory && (() => {
+        const history = getWorkerHistory(showHistory);
+        const activeHistory = history.filter(h => h.status !== 'delivered');
+        const completedHistory = history.filter(h => h.status === 'delivered');
+        return (
         <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowHistory(null)}>
           <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
               <div>
                 <h2 className="font-bold text-lg">{showHistory.name}</h2>
-                <p className="text-xs text-muted-foreground">{isUrdu ? 'ورک ہسٹری' : 'Work History'}</p>
+                <p className="text-xs text-muted-foreground">
+                  {activeHistory.length} {isUrdu ? 'فعال' : 'active'} · {completedHistory.length} {isUrdu ? 'مکمل' : 'completed'}
+                </p>
               </div>
               <button onClick={() => setShowHistory(null)} className="p-2 touch-target"><X size={20} /></button>
             </div>
-            <div className="p-4 space-y-2">
-              {(() => {
-                const history = getWorkerHistory(showHistory);
-                if (history.length === 0) return <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی کام نہیں' : 'No work assigned yet'}</p>;
-                return history.map((item, i) => (
-                  <div key={i} className="bg-background rounded-xl p-3 border border-border">
-                    <div className="flex items-center justify-between mb-1">
-                      <div>
-                        <p className="text-sm font-semibold">{item.customerName}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+            <div className="p-4 space-y-3">
+              {/* Active suits section */}
+              {activeHistory.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-primary mb-2 flex items-center gap-1">
+                    🔥 {isUrdu ? 'فعال / جاری کام' : 'Active / In Progress'} ({activeHistory.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {activeHistory.map((item) => (
+                      <div key={item.suitId} className="bg-background rounded-xl p-3 border border-primary/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">{item.customerName}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+                          </div>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                          <span>{suitTypeLabel(item.type)}</span>
+                          {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
+                          <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
+                          <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
+                          {item.location && (item.location.box || item.location.line || item.location.khanna) && (
+                            <span className="flex items-center gap-0.5"><MapPin size={8} />{item.location.box && `B${item.location.box}`}{item.location.line && `-L${item.location.line}`}{item.location.khanna && `-K${item.location.khanna}`}</span>
+                          )}
+                        </div>
+                        {/* Status change buttons */}
+                        <div className="flex gap-1.5 flex-wrap pt-1 border-t border-border/50">
+                          {ALL_STATUSES.map(s => (
+                            <button
+                              key={s}
+                              onClick={() => changeSuitStatus(item.orderId, item.suitId, s)}
+                              className={`px-2 py-1 rounded-lg text-[9px] font-semibold transition-colors active:scale-95 ${
+                                s === item.status
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground'
+                              }`}
+                            >
+                              {t(`status.${s}`)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <StatusBadge status={item.status} />
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
-                      <span>{suitTypeLabel(item.type)}</span>
-                      {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
-                      <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
-                      <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
-                    </div>
+                    ))}
                   </div>
-                ));
-              })()}
+                </div>
+              )}
+
+              {/* Completed suits section */}
+              {completedHistory.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1">
+                    ✅ {isUrdu ? 'مکمل شدہ' : 'Completed'} ({completedHistory.length})
+                  </h3>
+                  <div className="space-y-1.5">
+                    {completedHistory.map((item) => (
+                      <div key={item.suitId} className="bg-background rounded-xl p-3 border border-border">
+                        <div className="flex items-center justify-between mb-1">
+                          <div>
+                            <p className="text-sm font-semibold">{item.customerName}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+                          </div>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                          <span>{suitTypeLabel(item.type)}</span>
+                          {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
+                          <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
+                          <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {history.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی کام نہیں' : 'No work assigned yet'}</p>}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
