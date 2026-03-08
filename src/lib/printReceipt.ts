@@ -1,4 +1,5 @@
 import type { Order, Customer, Measurements } from '@/lib/store';
+import { getWhatsAppLink } from '@/lib/notifications';
 
 interface PrintReceiptOptions {
   order: Order;
@@ -112,4 +113,58 @@ export function printReceipt({ order, customer, lang, shopName = 'Karachi Tailor
       printWindow.print();
     };
   }
+}
+
+export function getReceiptWhatsAppLink({ order, customer, lang, shopName = 'Karachi Tailors' }: PrintReceiptOptions): string {
+  const isUrdu = lang === 'ur';
+  const balance = order.totalAmount - order.advancePaid;
+  const m = customer.measurements;
+
+  const suitTypes: Record<string, string> = {
+    full_suit: isUrdu ? 'فل سوٹ' : 'Full Suit',
+    kameez: isUrdu ? 'قمیض' : 'Kameez',
+    shalwar: isUrdu ? 'شلوار' : 'Shalwar',
+  };
+
+  const measurementLines = [
+    { label: isUrdu ? 'لمبائی' : 'Length', value: m.kameezLength },
+    { label: isUrdu ? 'سینہ' : 'Chest', value: m.chest },
+    { label: isUrdu ? 'کندھا' : 'Shoulder', value: m.shoulder },
+    { label: isUrdu ? 'آستین' : 'Sleeve', value: m.sleeve },
+    { label: isUrdu ? 'کالر' : 'Collar', value: m.collar },
+    { label: isUrdu ? 'دامن' : 'Daman', value: m.daman },
+    { label: isUrdu ? 'شلوار' : 'Shalwar', value: m.shalwarLength },
+    { label: isUrdu ? 'کمر' : 'Waist', value: m.waist },
+    { label: isUrdu ? 'ہپ' : 'Hip', value: m.hip },
+    { label: isUrdu ? 'پانچا' : 'Pancha', value: m.pancha },
+  ].filter(r => r.value).map(r => `  ${r.label}: ${r.value}`).join('\n');
+
+  const suitsText = order.suits.map((s, i) =>
+    `  ${i + 1}. ${suitTypes[s.type] || s.type}${s.designWork ? (isUrdu ? ' (ڈیزائن)' : ' (Design)') : ''} - ${s.status}`
+  ).join('\n');
+
+  const lines = [
+    `✂️ *${shopName}*`,
+    isUrdu ? '📋 آرڈر رسید' : '📋 Order Receipt',
+    '━━━━━━━━━━━━━━',
+    `${isUrdu ? 'نام' : 'Name'}: *${customer.name}*`,
+    `${isUrdu ? 'آئی ڈی' : 'ID'}: ${customer.customerId}`,
+    `${isUrdu ? 'تاریخ' : 'Date'}: ${new Date(order.createdAt).toLocaleDateString()}`,
+    `${isUrdu ? 'ڈیڈ لائن' : 'Deadline'}: ${new Date(order.deadline).toLocaleDateString()}`,
+    '',
+    `📐 *${isUrdu ? 'ناپ' : 'Measurements'}*`,
+    measurementLines || (isUrdu ? '  ناپ درج نہیں' : '  Not recorded'),
+    '',
+    `👔 *${isUrdu ? 'سوٹ' : 'Suits'}*`,
+    suitsText,
+    '',
+    `💰 *${isUrdu ? 'ادائیگی' : 'Payment'}*`,
+    `  ${isUrdu ? 'کل' : 'Total'}: Rs ${order.totalAmount.toLocaleString()}`,
+    `  ${isUrdu ? 'پیشگی' : 'Advance'}: Rs ${order.advancePaid.toLocaleString()}`,
+    `  *${isUrdu ? 'بقایا' : 'Balance'}: Rs ${balance.toLocaleString()}*`,
+    '━━━━━━━━━━━━━━',
+    isUrdu ? 'شکریہ! اللہ حافظ 🤲' : 'Thank you! 🤲',
+  ];
+
+  return getWhatsAppLink(customer.phone, lines.join('\n'));
 }
