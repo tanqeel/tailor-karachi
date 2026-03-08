@@ -381,6 +381,24 @@ export default function Orders() {
                         <input type="checkbox" checked={suit.designWork} onChange={e => updateSuit(idx, { designWork: e.target.checked })} className="rounded" />
                         {isUrdu ? 'ڈیزائن ورک' : 'Design Work'}
                       </label>
+                      {/* Location fields */}
+                      <div className="border-t border-border pt-2 mt-1">
+                        <p className="text-[10px] text-muted-foreground font-semibold mb-1.5 flex items-center gap-1"><MapPin size={10} /> {isUrdu ? 'جگہ / لوکیشن' : 'Location / Placement'}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground">{isUrdu ? 'باکس نمبر' : 'Box #'}</label>
+                            <input type="text" value={suit.location?.boxNumber || ''} onChange={e => updateSuit(idx, { location: { ...(suit.location || { boxNumber: '', lineNumber: '', khannaNumber: '' }), boxNumber: e.target.value } })} className="w-full px-2 py-1.5 rounded-lg bg-card border border-border text-xs" placeholder="—" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground">{isUrdu ? 'لائن نمبر' : 'Line #'}</label>
+                            <input type="text" value={suit.location?.lineNumber || ''} onChange={e => updateSuit(idx, { location: { ...(suit.location || { boxNumber: '', lineNumber: '', khannaNumber: '' }), lineNumber: e.target.value } })} className="w-full px-2 py-1.5 rounded-lg bg-card border border-border text-xs" placeholder="—" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground">{isUrdu ? 'خانہ نمبر' : 'Khanna #'}</label>
+                            <input type="text" value={suit.location?.khannaNumber || ''} onChange={e => updateSuit(idx, { location: { ...(suit.location || { boxNumber: '', lineNumber: '', khannaNumber: '' }), khannaNumber: e.target.value } })} className="w-full px-2 py-1.5 rounded-lg bg-card border border-border text-xs" placeholder="—" />
+                          </div>
+                        </div>
+                      </div>
                       {editingOrder && (
                         <select value={suit.status} onChange={e => updateSuit(idx, { status: e.target.value as SuitStatus })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
                           {ALL_STATUSES.map(s => (
