@@ -233,7 +233,25 @@ export default function Workers() {
       )}
 
       {/* Hisaab Modal */}
-      {showHisaab && (
+      {showHisaab && (() => {
+        const weeklyEarned = getWorkerEarnings(showHisaab, data.orders, 'weekly');
+        const weeklyAdv = getWorkerAdvancesTotal(showHisaab, 'weekly');
+        const weeklyPaid = getWorkerPaymentsTotal(showHisaab, 'weekly');
+        const weeklySuits = getWorkerSuitsCount(showHisaab, data.orders, 'weekly');
+        const allEarned = getWorkerEarnings(showHisaab, data.orders, 'monthly') + getWorkerEarnings(showHisaab, data.orders, 'daily'); // approx
+        const totalEarnedAll = data.orders.reduce((sum, o) => {
+          return sum + o.suits.filter(s => s.workerId === showHisaab.id).reduce((ss, s) => {
+            let r = s.type === 'kameez' ? showHisaab.rateKameez : s.type === 'shalwar' ? showHisaab.rateShalwar : showHisaab.rateSuit;
+            if (s.designWork) r += showHisaab.rateDesign;
+            return ss + r;
+          }, 0);
+        }, 0);
+        const totalAdvAll = getWorkerAdvancesTotal(showHisaab, 'all');
+        const totalPaidAll = getWorkerPaymentsTotal(showHisaab, 'all');
+        const allTimeSuits = getWorkerSuitsCount(showHisaab, data.orders, 'all');
+        const remainingBalance = totalEarnedAll - totalAdvAll - totalPaidAll;
+
+        return (
         <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowHisaab(null)}>
           <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
@@ -241,6 +259,7 @@ export default function Workers() {
               <button onClick={() => setShowHisaab(null)} className="p-2 touch-target"><X size={20} /></button>
             </div>
             <div className="p-4 space-y-4">
+              {/* Earnings by period */}
               <div className="grid grid-cols-3 gap-2">
                 {(['daily', 'weekly', 'monthly'] as const).map(period => (
                   <div key={period} className="bg-background rounded-xl p-3 text-center border border-border">
@@ -250,31 +269,63 @@ export default function Workers() {
                 ))}
               </div>
 
+              {/* All-time Summary Card */}
+              <div className="bg-background rounded-xl p-4 border border-border space-y-2">
+                <h3 className="font-semibold text-sm mb-1">{isUrdu ? 'مکمل حساب' : 'All-Time Summary'}</h3>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">✂️ {isUrdu ? 'سوٹ مکمل' : 'Suits Completed'}</span>
+                    <span className="font-semibold">{allTimeSuits}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">💰 {isUrdu ? 'کل کمائی' : 'Total Earned'}</span>
+                    <span className="font-semibold">Rs {totalEarnedAll.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">🔻 {isUrdu ? 'پیشگی' : 'Advances Taken'}</span>
+                    <span className="font-semibold text-destructive">- Rs {totalAdvAll.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">💵 {isUrdu ? 'ادائیگی' : 'Payments Made'}</span>
+                    <span className="font-semibold text-success">- Rs {totalPaidAll.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-border pt-1.5 flex justify-between font-bold text-base">
+                    <span>{isUrdu ? 'باقی بیلنس' : 'Remaining Balance'}</span>
+                    <span className={remainingBalance >= 0 ? 'text-primary' : 'text-destructive'}>Rs {remainingBalance.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Weekly Hisaab */}
               <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
                 <h3 className="font-semibold text-sm mb-2">{isUrdu ? 'ہفتہ وار حساب' : 'Weekly Hisaab'}</h3>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span>{isUrdu ? 'کمائی' : 'Earned'}</span>
-                    <span className="font-semibold">Rs {getWorkerEarnings(showHisaab, data.orders, 'weekly').toLocaleString()}</span>
+                    <span>✂️ {isUrdu ? 'سوٹ' : 'Suits'}</span>
+                    <span className="font-semibold">{weeklySuits}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{isUrdu ? 'پیشگی' : 'Advances'}</span>
-                    <span className="font-semibold text-destructive">- Rs {getWorkerAdvancesTotal(showHisaab, 'weekly').toLocaleString()}</span>
+                    <span>💰 {isUrdu ? 'کمائی' : 'Earned'}</span>
+                    <span className="font-semibold">Rs {weeklyEarned.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>🔻 {isUrdu ? 'پیشگی' : 'Advances'}</span>
+                    <span className="font-semibold text-destructive">- Rs {weeklyAdv.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>💵 {isUrdu ? 'ادائیگی' : 'Payments'}</span>
+                    <span className="font-semibold text-success">- Rs {weeklyPaid.toLocaleString()}</span>
                   </div>
                   <div className="border-t border-border pt-1 flex justify-between font-bold">
                     <span>{isUrdu ? 'قابل ادائیگی' : 'Net Payable'}</span>
-                    <span className="text-primary">Rs {(getWorkerEarnings(showHisaab, data.orders, 'weekly') - getWorkerAdvancesTotal(showHisaab, 'weekly')).toLocaleString()}</span>
+                    <span className="text-primary">Rs {(weeklyEarned - weeklyAdv - weeklyPaid).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* Send Hisaab via WhatsApp */}
               {showHisaab.phone && (() => {
-                const earned = getWorkerEarnings(showHisaab, data.orders, 'weekly');
-                const adv = getWorkerAdvancesTotal(showHisaab, 'weekly');
-                const net = earned - adv;
-                const suitsDone = data.orders.flatMap(o => o.suits).filter(s => s.workerId === showHisaab.id && s.status === 'delivered').length;
-                const msg = getWorkerHisaabMessage(showHisaab.name, earned, adv, net, suitsDone, isUrdu ? 'ur' : 'en');
+                const msg = getWorkerHisaabMessage(showHisaab.name, weeklyEarned, weeklyAdv, weeklyEarned - weeklyAdv - weeklyPaid, weeklySuits, isUrdu ? 'ur' : 'en');
                 return (
                   <a href={getWhatsAppLink(showHisaab.phone, msg)} target="_blank" rel="noopener noreferrer"
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-success/10 text-success font-semibold text-sm touch-target active:scale-95 transition-transform">
@@ -283,37 +334,78 @@ export default function Workers() {
                 );
               })()}
 
-              <div>
-                <h3 className="font-semibold text-sm mb-2">{t('worker.advances')}</h3>
-                <div className="flex gap-2">
-                  <input type="number" placeholder={isUrdu ? 'رقم' : 'Amount'} value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
-                  <button onClick={() => addAdvance(showHisaab)} className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm touch-target active:scale-95">
-                    + {isUrdu ? 'شامل' : 'Add'}
-                  </button>
-                </div>
-                <input placeholder={isUrdu ? 'نوٹ (اختیاری)' : 'Note (optional)'} value={advanceNote} onChange={e => setAdvanceNote(e.target.value)} className="w-full mt-2 px-4 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              {/* Tabs: Advances / Payments */}
+              <div className="flex gap-2">
+                <button onClick={() => setHisaabTab('advances')} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${hisaabTab === 'advances' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  {isUrdu ? 'پیشگی دیں' : 'Give Advance'}
+                </button>
+                <button onClick={() => setHisaabTab('payments')} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${hisaabTab === 'payments' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  <Banknote size={14} className="inline mr-1" />{isUrdu ? 'ادائیگی کریں' : 'Make Payment'}
+                </button>
               </div>
 
-              {showHisaab.advances.length > 0 && (
-                <div>
-                  <h4 className="text-xs text-muted-foreground mb-2">{isUrdu ? 'حالیہ پیشگی' : 'Recent Advances'}</h4>
-                  <div className="space-y-1">
-                    {showHisaab.advances.slice(-10).reverse().map(a => (
-                      <div key={a.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
-                        <div>
-                          <span className="text-muted-foreground">{new Date(a.date).toLocaleDateString()}</span>
-                          {a.note && <span className="text-[10px] text-muted-foreground ml-2">({a.note})</span>}
-                        </div>
-                        <span className="font-semibold">Rs {a.amount.toLocaleString()}</span>
-                      </div>
-                    ))}
+              {/* Advance Form */}
+              {hisaabTab === 'advances' && (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input type="number" placeholder={isUrdu ? 'رقم' : 'Amount'} value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                    <button onClick={() => addAdvance(showHisaab)} className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm touch-target active:scale-95">
+                      + {isUrdu ? 'شامل' : 'Add'}
+                    </button>
                   </div>
+                  <input placeholder={isUrdu ? 'نوٹ (اختیاری)' : 'Note (optional)'} value={advanceNote} onChange={e => setAdvanceNote(e.target.value)} className="w-full px-4 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  {showHisaab.advances.length > 0 && (
+                    <div>
+                      <h4 className="text-xs text-muted-foreground mb-1">{isUrdu ? 'حالیہ پیشگی' : 'Recent Advances'}</h4>
+                      <div className="space-y-1">
+                        {showHisaab.advances.slice(-10).reverse().map(a => (
+                          <div key={a.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
+                            <div>
+                              <span className="text-muted-foreground">{new Date(a.date).toLocaleDateString()}</span>
+                              {a.note && <span className="text-[10px] text-muted-foreground ml-2">({a.note})</span>}
+                            </div>
+                            <span className="font-semibold text-destructive">Rs {a.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Payment Form */}
+              {hisaabTab === 'payments' && (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input type="number" placeholder={isUrdu ? 'رقم' : 'Amount'} value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                    <button onClick={() => addPayment(showHisaab)} className="px-4 py-3 bg-success text-success-foreground rounded-xl font-semibold text-sm touch-target active:scale-95">
+                      + {isUrdu ? 'ادا' : 'Pay'}
+                    </button>
+                  </div>
+                  <input placeholder={isUrdu ? 'نوٹ (اختیاری)' : 'Note (optional)'} value={paymentNote} onChange={e => setPaymentNote(e.target.value)} className="w-full px-4 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  {(showHisaab.payments || []).length > 0 && (
+                    <div>
+                      <h4 className="text-xs text-muted-foreground mb-1">{isUrdu ? 'حالیہ ادائیگی' : 'Recent Payments'}</h4>
+                      <div className="space-y-1">
+                        {(showHisaab.payments || []).slice(-10).reverse().map(p => (
+                          <div key={p.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
+                            <div>
+                              <span className="text-muted-foreground">{new Date(p.date).toLocaleDateString()}</span>
+                              {p.note && <span className="text-[10px] text-muted-foreground ml-2">({p.note})</span>}
+                            </div>
+                            <span className="font-semibold text-success">Rs {p.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Work History Modal */}
       {showHistory && (
