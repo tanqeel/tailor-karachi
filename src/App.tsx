@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { DataProvider } from "@/contexts/DataContext";
 import TopBar from "@/components/TopBar";
+import InstallPrompt from "@/components/InstallPrompt";
 import BottomNav from "@/components/BottomNav";
 import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
@@ -43,6 +44,7 @@ function AppContent() {
         </Routes>
       </main>
       <BottomNav />
+      <InstallPrompt />
     </div>
   );
 }
