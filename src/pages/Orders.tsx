@@ -61,6 +61,7 @@ export default function Orders() {
   const [totalAmount, setTotalAmount] = useState('');
   const [advancePaid, setAdvancePaid] = useState('');
   const [suits, setSuits] = useState<OrderSuit[]>([]);
+  const [notes, setNotes] = useState('');
 
   const filtered = data.orders.filter(o => {
     const customer = data.customers.find(c => c.id === o.customerId);
@@ -75,6 +76,7 @@ export default function Orders() {
     setDeadline(new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
     setTotalAmount('');
     setAdvancePaid('');
+    setNotes('');
     setSuits([{
       id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '',
       statusHistory: [{ status: 'received', timestamp: new Date().toISOString() }],
@@ -88,6 +90,7 @@ export default function Orders() {
     setDeadline(o.deadline.slice(0, 10));
     setTotalAmount(String(o.totalAmount));
     setAdvancePaid(String(o.advancePaid));
+    setNotes(o.notes || '');
     setSuits([...o.suits]);
     setShowForm(true);
   };
@@ -114,9 +117,9 @@ export default function Orders() {
     const paymentStatus = advance >= total ? 'paid' : advance > 0 ? 'advance' : 'pending';
 
     if (editingOrder) {
-      updateOrder(editingOrder.id, { customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits });
+      updateOrder(editingOrder.id, { customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes });
     } else {
-      addOrder({ customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits });
+      addOrder({ customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes });
     }
     setShowForm(false);
   };
@@ -154,6 +157,7 @@ export default function Orders() {
           const customer = data.customers.find(c => c.id === order.customerId);
           const dlStatus = getDeadlineStatus(order.deadline);
           const balance = order.totalAmount - order.advancePaid;
+          const daysLeft = Math.ceil((new Date(order.deadline).getTime() - Date.now()) / 86400000);
 
           return (
             <div key={order.id} className="bg-card rounded-xl border border-border overflow-hidden">
@@ -163,7 +167,7 @@ export default function Orders() {
                     <p className="font-semibold">{customer?.name || 'Unknown'}</p>
                     <p className="text-xs text-muted-foreground font-mono">{customer?.customerId}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right space-y-1">
                     <span className={`text-xs font-bold px-2 py-1 rounded-full ${
                       dlStatus === 'overdue' ? 'bg-destructive text-destructive-foreground' :
                       dlStatus === 'urgent' ? 'bg-warning text-warning-foreground' :
@@ -172,6 +176,9 @@ export default function Orders() {
                     }`}>
                       {new Date(order.deadline).toLocaleDateString()}
                     </span>
+                    <p className={`text-[10px] font-semibold ${daysLeft < 0 ? 'text-destructive' : daysLeft <= 1 ? 'text-warning' : 'text-muted-foreground'}`}>
+                      {daysLeft < 0 ? (isUrdu ? `${Math.abs(daysLeft)} دن گزر گئے` : `${Math.abs(daysLeft)}d overdue`) : daysLeft === 0 ? (isUrdu ? 'آج' : 'Today') : (isUrdu ? `${daysLeft} دن باقی` : `${daysLeft}d left`)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -179,6 +186,7 @@ export default function Orders() {
                   <span>Rs {order.totalAmount.toLocaleString()}</span>
                   {balance > 0 && <span className="text-destructive font-semibold">{isUrdu ? 'بقایا' : 'Due'}: Rs {balance.toLocaleString()}</span>}
                 </div>
+                {order.notes && <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">📝 {order.notes}</p>}
               </div>
               <div className="px-4 pb-3 space-y-2">
                 <div className="flex flex-wrap gap-2">
@@ -342,6 +350,10 @@ export default function Orders() {
                     </div>
                   ))}
                 </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'نوٹس' : 'Notes'}</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder={isUrdu ? 'آرڈر کے بارے میں نوٹس...' : 'Order notes...'} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target resize-none" />
               </div>
               <div className="flex gap-3 pt-2">
                 {editingOrder && (
