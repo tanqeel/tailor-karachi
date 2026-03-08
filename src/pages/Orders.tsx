@@ -316,6 +316,14 @@ export default function Orders() {
                       <StatusBadge status={suit.status} />
                     </div>
                     {worker && <p className="text-[10px] text-muted-foreground mb-2">{isUrdu ? 'کاریگر' : 'Worker'}: {worker.name}</p>}
+                    {suit.location && (suit.location.box || suit.location.line || suit.location.khanna) && (
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2 bg-muted/50 rounded-lg px-2 py-1">
+                        <MapPin size={10} />
+                        {suit.location.box && <span>{isUrdu ? 'باکس' : 'Box'}: {suit.location.box}</span>}
+                        {suit.location.line && <span>{isUrdu ? 'لائن' : 'Line'}: {suit.location.line}</span>}
+                        {suit.location.khanna && <span>{isUrdu ? 'خانہ' : 'Khanna'}: {suit.location.khanna}</span>}
+                      </div>
+                    )}
                     <SuitTimeline suit={suit} t={t} isUrdu={isUrdu} />
                   </div>
                 );
