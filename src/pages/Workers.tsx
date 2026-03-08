@@ -6,8 +6,19 @@ import { getWhatsAppLink, getWorkerHisaabMessage } from '@/lib/notifications';
 import type { Worker, WorkerAdvance, WorkerPayment } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote } from 'lucide-react';
+import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote, Scissors, PenTool } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+
+const WORKER_ROLES = [
+  { key: 'cutting', en: 'Cutting', ur: 'کٹنگ', emoji: '✂️' },
+  { key: 'stitching', en: 'Stitching', ur: 'سلائی', emoji: '🧵' },
+  { key: 'finishing', en: 'Finishing', ur: 'فنشنگ', emoji: '✨' },
+  { key: 'pressing', en: 'Pressing / Ironing', ur: 'پریسنگ / استری', emoji: '🔥' },
+  { key: 'design', en: 'Design Work', ur: 'ڈیزائن ورک', emoji: '🎨' },
+  { key: 'embroidery', en: 'Embroidery', ur: 'کڑھائی', emoji: '🪡' },
+  { key: 'master', en: 'Master Tailor', ur: 'ماسٹر درزی', emoji: '👔' },
+  { key: 'helper', en: 'Helper', ur: 'ہیلپر', emoji: '🤝' },
+];
 
 export default function Workers() {
   const { t, isUrdu } = useLang();
