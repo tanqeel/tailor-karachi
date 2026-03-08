@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
-import { listBackups, restoreBackup } from '@/lib/autoBackup';
+import { listBackups, restoreBackup, deleteBackup, performManualBackup, downloadBackupAsFile, importBackupFromFile, isAutoBackupEnabled, setAutoBackupEnabled, getLastBackupTime } from '@/lib/autoBackup';
 import { loadShopSettings, saveShopSettings, loadGalleryImages, saveGalleryImages, loadReviews, saveReviews, generateShopId } from '@/lib/shopSettings';
 import type { AppData } from '@/lib/store';
+import type { BackupInfo } from '@/lib/autoBackup';
 import type { ShopSettings, PriceItem, GalleryImage, Review } from '@/lib/shopSettings';
 import VoiceInput from '@/components/VoiceInput';
-import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon, Store, Image, Plus, X, Star, MessageSquare, DollarSign } from 'lucide-react';
-import { useEffect } from 'react';
+import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon, Store, Image, Plus, X, Star, MessageSquare, DollarSign, Shield, Clock, HardDrive, FileDown, FileUp, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 function useTheme() {
