@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
-import { getWorkerEarnings, getWorkerAdvancesTotal, generateId } from '@/lib/store';
+import { getWorkerEarnings, getWorkerAdvancesTotal, getWorkerPaymentsTotal, getWorkerSuitsCount, generateId } from '@/lib/store';
 import { getWhatsAppLink, getWorkerHisaabMessage } from '@/lib/notifications';
-import type { Worker, WorkerAdvance } from '@/lib/store';
+import type { Worker, WorkerAdvance, WorkerPayment } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Wallet, ChevronRight, History, MessageCircle } from 'lucide-react';
+import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote } from 'lucide-react';
 
 export default function Workers() {
   const { t, isUrdu } = useLang();
@@ -30,6 +30,10 @@ export default function Workers() {
   // Advance form
   const [advanceAmount, setAdvanceAmount] = useState('');
   const [advanceNote, setAdvanceNote] = useState('');
+  // Payment form
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentNote, setPaymentNote] = useState('');
+  const [hisaabTab, setHisaabTab] = useState<'summary' | 'advances' | 'payments'>('summary');
 
   const filtered = data.workers.filter(w =>
     w.name.toLowerCase().includes(search.toLowerCase()) || w.phone.includes(search)
