@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getWorkerEarnings, getWorkerAdvancesTotal, generateId } from '@/lib/store';
+import { getWhatsAppLink, getWorkerHisaabMessage } from '@/lib/notifications';
 import type { Worker, WorkerAdvance } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Wallet, ChevronRight, History } from 'lucide-react';
+import { Plus, X, Wallet, ChevronRight, History, MessageCircle } from 'lucide-react';
 
 export default function Workers() {
   const { t, isUrdu } = useLang();
@@ -253,6 +254,21 @@ export default function Workers() {
                   </div>
                 </div>
               </div>
+
+              {/* Send Hisaab via WhatsApp */}
+              {showHisaab.phone && (() => {
+                const earned = getWorkerEarnings(showHisaab, data.orders, 'weekly');
+                const adv = getWorkerAdvancesTotal(showHisaab, 'weekly');
+                const net = earned - adv;
+                const suitsDone = data.orders.flatMap(o => o.suits).filter(s => s.workerId === showHisaab.id && s.status === 'delivered').length;
+                const msg = getWorkerHisaabMessage(showHisaab.name, earned, adv, net, suitsDone, isUrdu ? 'ur' : 'en');
+                return (
+                  <a href={getWhatsAppLink(showHisaab.phone, msg)} target="_blank" rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-success/10 text-success font-semibold text-sm touch-target active:scale-95 transition-transform">
+                    <MessageCircle size={16} /> {isUrdu ? 'واٹس ایپ پر حساب بھیجیں' : 'Send Hisaab via WhatsApp'}
+                  </a>
+                );
+              })()}
 
               <div>
                 <h3 className="font-semibold text-sm mb-2">{t('worker.advances')}</h3>
