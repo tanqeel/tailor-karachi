@@ -210,14 +210,35 @@ export default function Workers() {
                 <label className="text-xs text-muted-foreground font-medium">{t('common.phone')}</label>
                 <VoiceInput value={phone} onChange={setPhone} type="tel" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'کردار' : 'Role'}</label>
-                  <VoiceInput value={role} onChange={setRole} placeholder={isUrdu ? 'مثلاً ماسٹر درزی' : 'e.g. Master Tailor'} />
+              <div>
+                <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{isUrdu ? 'کردار (ایک یا زیادہ منتخب کریں)' : 'Roles (select one or more)'}</label>
+                <div className="flex flex-wrap gap-2">
+                  {WORKER_ROLES.map(r => {
+                    const selected = role.split(',').map(s => s.trim()).filter(Boolean).includes(r.key);
+                    return (
+                      <button
+                        key={r.key}
+                        type="button"
+                        onClick={() => {
+                          const current = role.split(',').map(s => s.trim()).filter(Boolean);
+                          const next = selected ? current.filter(k => k !== r.key) : [...current, r.key];
+                          setRole(next.join(','));
+                        }}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${
+                          selected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {r.emoji} {isUrdu ? r.ur : r.en}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
-                  <VoiceInput value={experience} onChange={setExperience} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
+                <VoiceInput value={experience} onChange={setExperience} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} />
                 </div>
               </div>
               <div>
