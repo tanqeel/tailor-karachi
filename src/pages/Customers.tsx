@@ -5,6 +5,7 @@ import { emptyMeasurements, generateId } from '@/lib/store';
 import type { Customer, Measurements, MeasurementRecord } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import { Plus, Phone, ChevronRight, X, User, MapPin, History } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 
 const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean) => [
   { section: t('measurements.kameez'), items: [
@@ -51,12 +52,7 @@ function MeasurementForm({ measurements, onChange, t, isUrdu }: { measurements: 
       ))}
       <div>
         <label className="text-xs text-muted-foreground">{isUrdu ? 'نوٹس' : 'Notes'}</label>
-        <textarea
-          value={measurements.notes}
-          onChange={e => onChange({ ...measurements, notes: e.target.value })}
-          className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          rows={2}
-        />
+        <VoiceInput value={measurements.notes} onChange={v => onChange({ ...measurements, notes: v })} multiline rows={2} append />
       </div>
     </div>
   );
@@ -178,15 +174,15 @@ export default function Customers() {
             <div className="p-4 space-y-4">
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('common.name')} *</label>
-                <input value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                <VoiceInput value={name} onChange={setName} />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('common.phone')}</label>
-                <input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                <VoiceInput value={phone} onChange={setPhone} type="tel" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'پتہ' : 'Address'}</label>
-                <input value={address} onChange={e => setAddress(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" placeholder={isUrdu ? 'مکمل پتہ...' : 'Full address...'} />
+                <VoiceInput value={address} onChange={setAddress} placeholder={isUrdu ? 'مکمل پتہ...' : 'Full address...'} />
               </div>
               <div>
                 <h3 className="font-semibold mb-2">{t('measurements.title')} ({isUrdu ? 'شلوار قمیض' : 'Shalwar Kameez'})</h3>
