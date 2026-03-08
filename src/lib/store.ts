@@ -147,10 +147,11 @@ export function loadData(): AppData {
         experience: w.experience || '',
         payments: w.payments || [],
       }));
-      // Migrate old orders without notes
+      // Migrate old orders without notes/paymentHistory
       data.orders = data.orders.map((o: any) => ({
         ...o,
         notes: o.notes || '',
+        paymentHistory: o.paymentHistory || [],
       }));
       return data;
     }
