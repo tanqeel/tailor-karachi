@@ -1,14 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
-import { listBackups, restoreBackup } from '@/lib/autoBackup';
+import { listBackups, restoreBackup, deleteBackup, performManualBackup, downloadBackupAsFile, importBackupFromFile, isAutoBackupEnabled, setAutoBackupEnabled, getLastBackupTime } from '@/lib/autoBackup';
 import { loadShopSettings, saveShopSettings, loadGalleryImages, saveGalleryImages, loadReviews, saveReviews, generateShopId } from '@/lib/shopSettings';
 import type { AppData } from '@/lib/store';
+import type { BackupInfo } from '@/lib/autoBackup';
 import type { ShopSettings, PriceItem, GalleryImage, Review } from '@/lib/shopSettings';
 import VoiceInput from '@/components/VoiceInput';
-import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon, Store, Image, Plus, X, Star, MessageSquare, DollarSign } from 'lucide-react';
-import { useEffect } from 'react';
+import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon, Store, Image, Plus, X, Star, MessageSquare, DollarSign, Shield, Clock, HardDrive, FileDown, FileUp, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 function useTheme() {
@@ -28,11 +28,14 @@ export default function Settings() {
   const { lang, toggleLang, isUrdu } = useLang();
   const { data, setData } = useData();
   const fileRef = useRef<HTMLInputElement>(null);
+  const restoreFileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [showBackups, setShowBackups] = useState(false);
   const [showClear, setShowClear] = useState(false);
-  const [activeSection, setActiveSection] = useState<'main' | 'shop' | 'gallery' | 'prices' | 'reviews'>('main');
-  const backups = listBackups();
+  const [activeSection, setActiveSection] = useState<'main' | 'shop' | 'gallery' | 'prices' | 'reviews' | 'backup'>('main');
+  const [backups, setBackups] = useState<BackupInfo[]>(() => listBackups());
+  const [autoBackup, setAutoBackup] = useState(isAutoBackupEnabled);
+  const lastBackup = getLastBackupTime();
   const theme = useTheme();
 
   // Shop settings
@@ -59,20 +62,46 @@ export default function Settings() {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const imported: AppData = JSON.parse(reader.result as string);
-        if (imported.customers && imported.orders && imported.workers) setData(imported);
-      } catch {}
-    };
-    reader.readAsText(file);
+    importBackupFromFile(file).then(imported => {
+      if (imported) {
+        setData(imported);
+        toast.success(isUrdu ? 'بیک اپ بحال ہو گیا!' : 'Backup restored successfully!');
+      } else {
+        toast.error(isUrdu ? 'غلط فائل فارمیٹ' : 'Invalid backup file format');
+      }
+    });
     e.target.value = '';
   };
 
   const handleRestore = (key: string) => {
     const restored = restoreBackup(key);
-    if (restored) { setData(restored); setShowBackups(false); }
+    if (restored) {
+      setData(restored);
+      toast.success(isUrdu ? 'بیک اپ بحال ہو گیا!' : 'Backup restored!');
+      setShowBackups(false);
+    }
+  };
+
+  const handleManualBackup = () => {
+    performManualBackup(data);
+    setBackups(listBackups());
+    toast.success(isUrdu ? 'بیک اپ بنایا گیا!' : 'Manual backup created!');
+  };
+
+  const handleDeleteBackup = (key: string) => {
+    deleteBackup(key);
+    setBackups(listBackups());
+    toast.success(isUrdu ? 'بیک اپ حذف ہو گیا' : 'Backup deleted');
+  };
+
+  const handleToggleAutoBackup = () => {
+    const next = !autoBackup;
+    setAutoBackup(next);
+    setAutoBackupEnabled(next);
+    toast.success(next 
+      ? (isUrdu ? 'خودکار بیک اپ فعال' : 'Auto backup enabled')
+      : (isUrdu ? 'خودکار بیک اپ غیر فعال' : 'Auto backup disabled')
+    );
   };
 
   const handleClearAll = () => { setData({ customers: [], orders: [], workers: [] }); setShowClear(false); };
@@ -132,6 +161,133 @@ export default function Settings() {
     const updated = reviews.filter(r => r.id !== id);
     setReviews(updated); saveReviews(updated);
   };
+
+  // Backup & Restore section
+  if (activeSection === 'backup') return (
+    <div className="space-y-4 pb-4">
+      <button onClick={() => setActiveSection('main')} className="text-sm text-primary font-semibold">← {isUrdu ? 'واپس' : 'Back'}</button>
+      <div className="flex items-center gap-2 mb-1">
+        <Shield size={22} className="text-primary" />
+        <h2 className="text-lg font-bold">{isUrdu ? 'بیک اپ اور بحالی' : 'Backup & Restore'}</h2>
+      </div>
+
+      {/* Last backup info */}
+      <div className="bg-card rounded-xl p-4 border border-border">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-2.5 rounded-xl bg-success/10">
+            <CalendarCheck size={20} className="text-success" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">{isUrdu ? 'آخری بیک اپ' : 'Last Backup'}</p>
+            <p className="text-xs text-muted-foreground">
+              {lastBackup ? new Date(lastBackup).toLocaleString() : (isUrdu ? 'کوئی بیک اپ نہیں' : 'No backup yet')}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="bg-background rounded-lg p-2 border border-border">
+            <p className="text-lg font-bold text-primary">{data.customers.length}</p>
+            <p className="text-[10px] text-muted-foreground">{isUrdu ? 'گاہک' : 'Customers'}</p>
+          </div>
+          <div className="bg-background rounded-lg p-2 border border-border">
+            <p className="text-lg font-bold text-primary">{data.orders.length}</p>
+            <p className="text-[10px] text-muted-foreground">{isUrdu ? 'آرڈرز' : 'Orders'}</p>
+          </div>
+          <div className="bg-background rounded-lg p-2 border border-border">
+            <p className="text-lg font-bold text-primary">{data.workers.length}</p>
+            <p className="text-[10px] text-muted-foreground">{isUrdu ? 'کاریگر' : 'Workers'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Auto backup toggle */}
+      <button onClick={handleToggleAutoBackup} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
+        <div className="p-3 rounded-xl bg-warning/10"><Clock size={20} className="text-warning" /></div>
+        <div className="flex-1 text-left">
+          <p className="font-semibold text-sm">{isUrdu ? 'روزانہ خودکار بیک اپ' : 'Daily Auto Backup'}</p>
+          <p className="text-xs text-muted-foreground">{isUrdu ? 'ہر روز خود بخود بیک اپ بنائے' : 'Automatically backs up every day'}</p>
+        </div>
+        <div className={`w-12 h-7 rounded-full relative transition-colors ${autoBackup ? 'bg-primary' : 'bg-muted'}`}>
+          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-card shadow transition-transform ${autoBackup ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        </div>
+      </button>
+
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={handleManualBackup} className="bg-primary text-primary-foreground rounded-xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+          <HardDrive size={24} />
+          <span className="text-xs font-semibold">{isUrdu ? 'ابھی بیک اپ بنائیں' : 'Backup Now'}</span>
+        </button>
+        <button onClick={() => downloadBackupAsFile(data)} className="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform">
+          <FileDown size={24} className="text-success" />
+          <span className="text-xs font-semibold">{isUrdu ? 'فائل ڈاؤنلوڈ' : 'Download File'}</span>
+        </button>
+      </div>
+
+      {/* Restore from file */}
+      <button onClick={() => restoreFileRef.current?.click()} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
+        <div className="p-3 rounded-xl bg-info/10"><FileUp size={20} className="text-info" /></div>
+        <div className="flex-1 text-left">
+          <p className="font-semibold text-sm">{isUrdu ? 'فائل سے بحال کریں' : 'Restore from File'}</p>
+          <p className="text-xs text-muted-foreground">{isUrdu ? 'JSON بیک اپ فائل سے ڈیٹا بحال کریں' : 'Import JSON backup file'}</p>
+        </div>
+      </button>
+      <input ref={restoreFileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+
+      {/* Saved backups list */}
+      <div>
+        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+          <Database size={16} className="text-muted-foreground" />
+          {isUrdu ? 'محفوظ شدہ بیک اپ' : 'Saved Backups'} ({backups.length})
+        </h3>
+        {backups.length === 0 && (
+          <p className="text-center text-muted-foreground py-6 text-sm">{isUrdu ? 'کوئی بیک اپ نہیں' : 'No backups yet'}</p>
+        )}
+        <div className="space-y-2">
+          {backups.map(b => (
+            <div key={b.key} className="bg-card rounded-xl border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{new Date(b.timestamp).toLocaleDateString()}</p>
+                    {b.manual && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                        {isUrdu ? 'دستی' : 'Manual'}
+                      </span>
+                    )}
+                    {!b.manual && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-success/10 text-success font-medium">
+                        {isUrdu ? 'خودکار' : 'Auto'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{new Date(b.timestamp).toLocaleTimeString()}</p>
+                </div>
+                <div className="flex gap-1.5">
+                  <button onClick={() => handleRestore(b.key)} className="px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold active:scale-95 transition-transform flex items-center gap-1">
+                    <RotateCcw size={10} /> {isUrdu ? 'بحال' : 'Restore'}
+                  </button>
+                  <button onClick={() => handleDeleteBackup(b.key)} className="px-2 py-1.5 rounded-lg bg-destructive/10 text-destructive text-[10px] font-semibold active:scale-95 transition-transform">
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+              {b.stats && (
+                <div className="flex gap-2 flex-wrap text-[9px] text-muted-foreground">
+                  <span>👤 {b.stats.customers} {isUrdu ? 'گاہک' : 'customers'}</span>
+                  <span>📋 {b.stats.orders} {isUrdu ? 'آرڈرز' : 'orders'}</span>
+                  <span>🔧 {b.stats.workers} {isUrdu ? 'کاریگر' : 'workers'}</span>
+                  <span>👔 {b.stats.totalSuits} {isUrdu ? 'سوٹ' : 'suits'}</span>
+                  <span>📐 {b.stats.totalMeasurements} {isUrdu ? 'ناپ' : 'measurements'}</span>
+                  <span>💰 {b.stats.totalPayments} {isUrdu ? 'ادائیگی' : 'payments'}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   // Sub-sections
   if (activeSection === 'shop') return (
@@ -354,48 +510,16 @@ export default function Settings() {
         </div>
       </button>
 
-      {/* Export */}
-      <button onClick={() => exportBackup(data)} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-success/10"><Download size={22} className="text-success" /></div>
+      {/* Backup & Restore */}
+      <button onClick={() => setActiveSection('backup')} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
+        <div className="p-3 rounded-xl bg-success/10"><Shield size={22} className="text-success" /></div>
         <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ ڈاؤنلوڈ' : 'Export Backup'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'JSON فائل میں ڈیٹا محفوظ کریں' : 'Save data as JSON file'}</p>
+          <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ اور بحالی' : 'Backup & Restore'}</p>
+          <p className="text-xs text-muted-foreground">
+            {backups.length} {isUrdu ? 'بیک اپ' : 'backups'} · {autoBackup ? (isUrdu ? 'خودکار فعال' : 'Auto ON') : (isUrdu ? 'خودکار غیر فعال' : 'Auto OFF')}
+          </p>
         </div>
       </button>
-
-      {/* Import */}
-      <button onClick={() => fileRef.current?.click()} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-info/10"><Upload size={22} className="text-info" /></div>
-        <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ بحال کریں' : 'Import Backup'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'JSON فائل سے ڈیٹا بحال کریں' : 'Restore from JSON'}</p>
-        </div>
-      </button>
-      <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-
-      {/* Auto Backups */}
-      <button onClick={() => setShowBackups(!showBackups)} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-warning/10"><Database size={22} className="text-warning" /></div>
-        <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'خودکار بیک اپ' : 'Auto Backups'}</p>
-          <p className="text-xs text-muted-foreground">{backups.length} {isUrdu ? 'بیک اپ محفوظ' : 'backups saved'}</p>
-        </div>
-      </button>
-      {showBackups && backups.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-4 space-y-2">
-          {backups.map(b => (
-            <div key={b.key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-              <div>
-                <p className="text-sm font-medium">{b.date}</p>
-                <p className="text-[10px] text-muted-foreground">{new Date(b.timestamp).toLocaleString()}</p>
-              </div>
-              <button onClick={() => handleRestore(b.key)} className="px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold touch-target active:scale-95">
-                <RotateCcw size={14} className="inline mr-1" /> {isUrdu ? 'بحال' : 'Restore'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Clear All */}
       <button onClick={() => setShowClear(true)} className="w-full bg-card rounded-xl p-4 border border-destructive/30 flex items-center gap-4 active:scale-[0.98] transition-transform">
