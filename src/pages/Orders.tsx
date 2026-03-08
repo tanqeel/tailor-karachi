@@ -4,7 +4,7 @@ import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
 import type { Order, OrderSuit, SuitStatus } from '@/lib/store';
 import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
-import { printReceipt } from '@/lib/printReceipt';
+import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
 import { Plus, X, MessageCircle, Printer } from 'lucide-react';
