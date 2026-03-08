@@ -28,11 +28,14 @@ export default function Settings() {
   const { lang, toggleLang, isUrdu } = useLang();
   const { data, setData } = useData();
   const fileRef = useRef<HTMLInputElement>(null);
+  const restoreFileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [showBackups, setShowBackups] = useState(false);
   const [showClear, setShowClear] = useState(false);
-  const [activeSection, setActiveSection] = useState<'main' | 'shop' | 'gallery' | 'prices' | 'reviews'>('main');
-  const backups = listBackups();
+  const [activeSection, setActiveSection] = useState<'main' | 'shop' | 'gallery' | 'prices' | 'reviews' | 'backup'>('main');
+  const [backups, setBackups] = useState<BackupInfo[]>(() => listBackups());
+  const [autoBackup, setAutoBackup] = useState(isAutoBackupEnabled);
+  const lastBackup = getLastBackupTime();
   const theme = useTheme();
 
   // Shop settings
