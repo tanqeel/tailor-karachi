@@ -51,6 +51,9 @@ export default function Orders() {
   const { t, lang, isUrdu } = useLang();
   const { data, addOrder, updateOrder, deleteOrder } = useData();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'delivered' | 'overdue'>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [showTimeline, setShowTimeline] = useState<Order | null>(null);
@@ -67,7 +70,18 @@ export default function Orders() {
     const customer = data.customers.find(c => c.id === o.customerId);
     if (!customer) return false;
     const q = search.toLowerCase();
-    return customer.name.toLowerCase().includes(q) || customer.customerId.toLowerCase().includes(q) || customer.phone.includes(q);
+    if (q && !(customer.name.toLowerCase().includes(q) || customer.customerId.toLowerCase().includes(q) || customer.phone.includes(q))) return false;
+
+    // Status filter
+    if (statusFilter === 'active' && o.deliveredAt) return false;
+    if (statusFilter === 'delivered' && !o.deliveredAt) return false;
+    if (statusFilter === 'overdue' && getDeadlineStatus(o.deadline) !== 'overdue') return false;
+
+    // Date range filter
+    if (dateFrom && new Date(o.createdAt) < new Date(dateFrom)) return false;
+    if (dateTo && new Date(o.createdAt) > new Date(dateTo + 'T23:59:59')) return false;
+
+    return true;
   }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const openNew = () => {
