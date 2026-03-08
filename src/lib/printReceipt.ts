@@ -1,5 +1,6 @@
 import type { Order, Customer, Measurements } from '@/lib/store';
 import { getWhatsAppLink } from '@/lib/notifications';
+import { sanitize } from '@/lib/validation';
 
 interface PrintReceiptOptions {
   order: Order;
