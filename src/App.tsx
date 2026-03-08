@@ -27,7 +27,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background flex flex-col max-w-lg mx-auto">
       <TopBar />
-      <main className="flex-1 px-4 py-4 pb-20">
+      <main className="flex-1 px-4 py-4 pb-24">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/customers" element={<Customers />} />
