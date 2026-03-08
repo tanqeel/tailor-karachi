@@ -4,19 +4,23 @@ import { useData } from '@/contexts/DataContext';
 import { getWorkerEarnings, getWorkerAdvancesTotal, generateId } from '@/lib/store';
 import type { Worker, WorkerAdvance } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
-import { Plus, X, Wallet, TrendingUp, ChevronRight } from 'lucide-react';
+import StatusBadge from '@/components/StatusBadge';
+import { Plus, X, Wallet, ChevronRight, History } from 'lucide-react';
 
 export default function Workers() {
-  const { t } = useLang();
+  const { t, isUrdu } = useLang();
   const { data, addWorker, updateWorker, deleteWorker } = useData();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Worker | null>(null);
   const [showHisaab, setShowHisaab] = useState<Worker | null>(null);
+  const [showHistory, setShowHistory] = useState<Worker | null>(null);
 
   // Form
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('');
+  const [experience, setExperience] = useState('');
   const [rateKameez, setRateKameez] = useState('');
   const [rateShalwar, setRateShalwar] = useState('');
   const [rateSuit, setRateSuit] = useState('');
@@ -30,9 +34,29 @@ export default function Workers() {
     w.name.toLowerCase().includes(search.toLowerCase()) || w.phone.includes(search)
   );
 
+  const getWorkerHistory = (worker: Worker) => {
+    return data.orders.flatMap(o => {
+      const customer = data.customers.find(c => c.id === o.customerId);
+      return o.suits
+        .filter(s => s.workerId === worker.id)
+        .map(s => ({
+          orderId: o.id,
+          customerName: customer?.name || 'Unknown',
+          customerId: customer?.customerId || '',
+          type: s.type,
+          status: s.status,
+          designWork: s.designWork,
+          deadline: o.deadline,
+          createdAt: o.createdAt,
+          rate: s.type === 'kameez' ? worker.rateKameez : s.type === 'shalwar' ? worker.rateShalwar : worker.rateSuit,
+          designRate: s.designWork ? worker.rateDesign : 0,
+        }));
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
+
   const openNew = () => {
     setEditing(null);
-    setName(''); setPhone('');
+    setName(''); setPhone(''); setRole(''); setExperience('');
     setRateKameez(''); setRateShalwar(''); setRateSuit(''); setRateDesign('');
     setShowForm(true);
   };
@@ -40,6 +64,7 @@ export default function Workers() {
   const openEdit = (w: Worker) => {
     setEditing(w);
     setName(w.name); setPhone(w.phone);
+    setRole(w.role || ''); setExperience(w.experience || '');
     setRateKameez(String(w.rateKameez)); setRateShalwar(String(w.rateShalwar));
     setRateSuit(String(w.rateSuit)); setRateDesign(String(w.rateDesign));
     setShowForm(true);
@@ -48,7 +73,7 @@ export default function Workers() {
   const handleSave = () => {
     if (!name.trim()) return;
     const workerData = {
-      name, phone,
+      name, phone, role, experience,
       rateKameez: Number(rateKameez) || 0,
       rateShalwar: Number(rateShalwar) || 0,
       rateSuit: Number(rateSuit) || 0,
@@ -68,8 +93,16 @@ export default function Workers() {
     updateWorker(worker.id, { advances: [...worker.advances, adv] });
     setAdvanceAmount('');
     setAdvanceNote('');
-    // Refresh hisaab view
     setShowHisaab(data.workers.find(w => w.id === worker.id) || worker);
+  };
+
+  const suitTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      full_suit: isUrdu ? 'فل سوٹ' : 'Full Suit',
+      kameez: isUrdu ? 'قمیض' : 'Kameez',
+      shalwar: isUrdu ? 'شلوار' : 'Shalwar',
+    };
+    return labels[type] || type;
   };
 
   return (
@@ -83,8 +116,8 @@ export default function Workers() {
       <div className="space-y-3">
         {filtered.map(worker => {
           const weeklyEarnings = getWorkerEarnings(worker, data.orders, 'weekly');
-          const weeklyAdvances = getWorkerAdvancesTotal(worker, 'weekly');
           const activeSuits = data.orders.flatMap(o => o.suits).filter(s => s.workerId === worker.id && s.status !== 'delivered').length;
+          const totalCompleted = data.orders.flatMap(o => o.suits).filter(s => s.workerId === worker.id && s.status === 'delivered').length;
 
           return (
             <div key={worker.id} className="bg-card rounded-xl border border-border overflow-hidden">
@@ -94,19 +127,32 @@ export default function Workers() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{worker.name}</p>
-                  <p className="text-xs text-muted-foreground">{activeSuits} active suits · Rs {weeklyEarnings.toLocaleString()}/wk</p>
+                  {worker.role && <p className="text-[10px] text-muted-foreground">{worker.role}{worker.experience ? ` · ${worker.experience}` : ''}</p>}
+                  <p className="text-xs text-muted-foreground">
+                    {activeSuits} {isUrdu ? 'فعال' : 'active'} · {totalCompleted} {isUrdu ? 'مکمل' : 'done'} · Rs {weeklyEarnings.toLocaleString()}/{isUrdu ? 'ہفتہ' : 'wk'}
+                  </p>
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+              </div>
+              {/* Rates */}
+              <div className="px-4 pb-2 flex flex-wrap gap-1">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{isUrdu ? 'قمیض' : 'Kam'}: Rs {worker.rateKameez}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{isUrdu ? 'شلوار' : 'Shl'}: Rs {worker.rateShalwar}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{isUrdu ? 'سوٹ' : 'Suit'}: Rs {worker.rateSuit}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{isUrdu ? 'ڈیزائن' : 'Design'}: Rs {worker.rateDesign}</span>
               </div>
               <div className="px-4 pb-3 flex gap-2">
                 <button onClick={() => { setShowHisaab(worker); setAdvanceAmount(''); setAdvanceNote(''); }} className="flex-1 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold touch-target active:scale-95">
                   <Wallet size={14} className="inline mr-1" /> {t('worker.hisaab')}
                 </button>
+                <button onClick={() => setShowHistory(worker)} className="flex-1 py-2 rounded-lg bg-accent/10 text-accent-foreground text-xs font-semibold touch-target active:scale-95">
+                  <History size={14} className="inline mr-1" /> {isUrdu ? 'ورک ہسٹری' : 'Work History'}
+                </button>
               </div>
             </div>
           );
         })}
-        {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No workers found</p>}
+        {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی کاریگر نہیں' : 'No workers found'}</p>}
       </div>
 
       {/* Worker Form */}
@@ -128,20 +174,33 @@ export default function Workers() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">{t('worker.rate.kameez')}</label>
-                  <input type="number" value={rateKameez} onChange={e => setRateKameez(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'کردار' : 'Role'}</label>
+                  <input value={role} onChange={e => setRole(e.target.value)} placeholder={isUrdu ? 'مثلاً ماسٹر درزی' : 'e.g. Master Tailor'} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">{t('worker.rate.shalwar')}</label>
-                  <input type="number" value={rateShalwar} onChange={e => setRateShalwar(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
+                  <input value={experience} onChange={e => setExperience(e.target.value)} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium">{t('worker.rate.suit')}</label>
-                  <input type="number" value={rateSuit} onChange={e => setRateSuit(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground font-medium">{t('worker.rate.design')}</label>
-                  <input type="number" value={rateDesign} onChange={e => setRateDesign(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+              </div>
+              <div>
+                <h3 className="text-xs text-muted-foreground font-medium mb-2">{isUrdu ? 'ریٹ (فی سوٹ)' : 'Rates (per piece)'}</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">{t('worker.rate.kameez')}</label>
+                    <input type="number" value={rateKameez} onChange={e => setRateKameez(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">{t('worker.rate.shalwar')}</label>
+                    <input type="number" value={rateShalwar} onChange={e => setRateShalwar(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">{t('worker.rate.suit')}</label>
+                    <input type="number" value={rateSuit} onChange={e => setRateSuit(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground">{t('worker.rate.design')}</label>
+                    <input type="number" value={rateDesign} onChange={e => setRateDesign(e.target.value)} placeholder="Rs" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
@@ -168,7 +227,6 @@ export default function Workers() {
               <button onClick={() => setShowHisaab(null)} className="p-2 touch-target"><X size={20} /></button>
             </div>
             <div className="p-4 space-y-4">
-              {/* Earnings Summary */}
               <div className="grid grid-cols-3 gap-2">
                 {(['daily', 'weekly', 'monthly'] as const).map(period => (
                   <div key={period} className="bg-background rounded-xl p-3 text-center border border-border">
@@ -178,51 +236,89 @@ export default function Workers() {
                 ))}
               </div>
 
-              {/* Weekly Hisaab */}
               <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
-                <h3 className="font-semibold text-sm mb-2">Weekly Hisaab</h3>
+                <h3 className="font-semibold text-sm mb-2">{isUrdu ? 'ہفتہ وار حساب' : 'Weekly Hisaab'}</h3>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span>Earned</span>
+                    <span>{isUrdu ? 'کمائی' : 'Earned'}</span>
                     <span className="font-semibold">Rs {getWorkerEarnings(showHisaab, data.orders, 'weekly').toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Advances</span>
+                    <span>{isUrdu ? 'پیشگی' : 'Advances'}</span>
                     <span className="font-semibold text-destructive">- Rs {getWorkerAdvancesTotal(showHisaab, 'weekly').toLocaleString()}</span>
                   </div>
                   <div className="border-t border-border pt-1 flex justify-between font-bold">
-                    <span>Net Payable</span>
+                    <span>{isUrdu ? 'قابل ادائیگی' : 'Net Payable'}</span>
                     <span className="text-primary">Rs {(getWorkerEarnings(showHisaab, data.orders, 'weekly') - getWorkerAdvancesTotal(showHisaab, 'weekly')).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Give Advance */}
               <div>
                 <h3 className="font-semibold text-sm mb-2">{t('worker.advances')}</h3>
                 <div className="flex gap-2">
-                  <input type="number" placeholder="Amount" value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  <input type="number" placeholder={isUrdu ? 'رقم' : 'Amount'} value={advanceAmount} onChange={e => setAdvanceAmount(e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
                   <button onClick={() => addAdvance(showHisaab)} className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm touch-target active:scale-95">
-                    + Add
+                    + {isUrdu ? 'شامل' : 'Add'}
                   </button>
                 </div>
-                <input placeholder="Note (optional)" value={advanceNote} onChange={e => setAdvanceNote(e.target.value)} className="w-full mt-2 px-4 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                <input placeholder={isUrdu ? 'نوٹ (اختیاری)' : 'Note (optional)'} value={advanceNote} onChange={e => setAdvanceNote(e.target.value)} className="w-full mt-2 px-4 py-2 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
 
-              {/* Advance History */}
               {showHisaab.advances.length > 0 && (
                 <div>
-                  <h4 className="text-xs text-muted-foreground mb-2">Recent Advances</h4>
+                  <h4 className="text-xs text-muted-foreground mb-2">{isUrdu ? 'حالیہ پیشگی' : 'Recent Advances'}</h4>
                   <div className="space-y-1">
                     {showHisaab.advances.slice(-10).reverse().map(a => (
                       <div key={a.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
-                        <span className="text-muted-foreground">{new Date(a.date).toLocaleDateString()}</span>
+                        <div>
+                          <span className="text-muted-foreground">{new Date(a.date).toLocaleDateString()}</span>
+                          {a.note && <span className="text-[10px] text-muted-foreground ml-2">({a.note})</span>}
+                        </div>
                         <span className="font-semibold">Rs {a.amount.toLocaleString()}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Work History Modal */}
+      {showHistory && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowHistory(null)}>
+          <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
+              <div>
+                <h2 className="font-bold text-lg">{showHistory.name}</h2>
+                <p className="text-xs text-muted-foreground">{isUrdu ? 'ورک ہسٹری' : 'Work History'}</p>
+              </div>
+              <button onClick={() => setShowHistory(null)} className="p-2 touch-target"><X size={20} /></button>
+            </div>
+            <div className="p-4 space-y-2">
+              {(() => {
+                const history = getWorkerHistory(showHistory);
+                if (history.length === 0) return <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی کام نہیں' : 'No work assigned yet'}</p>;
+                return history.map((item, i) => (
+                  <div key={i} className="bg-background rounded-xl p-3 border border-border">
+                    <div className="flex items-center justify-between mb-1">
+                      <div>
+                        <p className="text-sm font-semibold">{item.customerName}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                      <span>{suitTypeLabel(item.type)}</span>
+                      {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
+                      <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
+                      <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>
