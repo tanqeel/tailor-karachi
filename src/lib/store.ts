@@ -56,6 +56,14 @@ export interface OrderSuit {
   statusHistory: StatusChange[];
 }
 
+export interface PaymentRecord {
+  id: string;
+  amount: number;
+  date: string;
+  method: 'cash' | 'bank' | 'easypaisa' | 'jazzcash' | 'other';
+  note: string;
+}
+
 export interface Order {
   id: string;
   customerId: string;
@@ -63,6 +71,7 @@ export interface Order {
   totalAmount: number;
   advancePaid: number;
   paymentStatus: 'advance' | 'partial' | 'paid' | 'pending';
+  paymentHistory: PaymentRecord[];
   deadline: string;
   notes: string;
   createdAt: string;
@@ -138,10 +147,11 @@ export function loadData(): AppData {
         experience: w.experience || '',
         payments: w.payments || [],
       }));
-      // Migrate old orders without notes
+      // Migrate old orders without notes/paymentHistory
       data.orders = data.orders.map((o: any) => ({
         ...o,
         notes: o.notes || '',
+        paymentHistory: o.paymentHistory || [],
       }));
       return data;
     }

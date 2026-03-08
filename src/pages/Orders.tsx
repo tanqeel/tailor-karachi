@@ -133,7 +133,7 @@ export default function Orders() {
     if (editingOrder) {
       updateOrder(editingOrder.id, { customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes });
     } else {
-      addOrder({ customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes });
+      addOrder({ customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes, paymentHistory: advance > 0 ? [{ id: Date.now().toString(36), amount: advance, date: new Date().toISOString(), method: 'cash' as const, note: isUrdu ? 'پیشگی' : 'Advance' }] : [] });
     }
     setShowForm(false);
   };
