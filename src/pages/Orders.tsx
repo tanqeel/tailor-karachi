@@ -148,8 +148,15 @@ export default function Orders() {
                 <div className="flex gap-2 flex-wrap">
                   {/* Print Receipt */}
                   <button onClick={() => handlePrint(order)} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold active:scale-95 transition-transform">
-                    <Printer size={12} /> {lang === 'ur' ? 'رسید' : 'Receipt'}
+                    <Printer size={12} /> {lang === 'ur' ? 'پرنٹ' : 'Print'}
                   </button>
+                  {/* WhatsApp Receipt */}
+                  {customer?.phone && (
+                    <a href={getReceiptWhatsAppLink({ order, customer, lang })} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
+                      <MessageCircle size={12} /> {lang === 'ur' ? 'رسید بھیجیں' : 'Send Receipt'}
+                    </a>
+                  )}
                   {customer?.phone && (
                     <>
                       {(dlStatus === 'overdue' || dlStatus === 'urgent' || dlStatus === 'approaching') && (
