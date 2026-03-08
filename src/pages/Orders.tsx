@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
@@ -7,7 +7,7 @@ import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, 
 import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, MessageCircle, Printer, Clock } from 'lucide-react';
+import { Plus, X, MessageCircle, Printer, Clock, Filter } from 'lucide-react';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
 
@@ -161,6 +161,32 @@ export default function Orders() {
   return (
     <div className="space-y-4 pb-4">
       <SearchBar value={search} onChange={setSearch} />
+
+      {/* Filters */}
+      <div className="space-y-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {([['all', isUrdu ? 'سب' : 'All'], ['active', isUrdu ? 'فعال' : 'Active'], ['delivered', isUrdu ? 'مکمل' : 'Delivered'], ['overdue', isUrdu ? 'تاخیر' : 'Overdue']] as const).map(([key, label]) => (
+            <button key={key} onClick={() => setStatusFilter(key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${statusFilter === key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              {label}
+              {key !== 'all' && <span className="ml-1 opacity-70">
+                ({key === 'active' ? data.orders.filter(o => !o.deliveredAt).length : key === 'delivered' ? data.orders.filter(o => o.deliveredAt).length : data.orders.filter(o => getDeadlineStatus(o.deadline) === 'overdue').length})
+              </span>}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} placeholder={isUrdu ? 'سے' : 'From'}
+            className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} placeholder={isUrdu ? 'تک' : 'To'}
+            className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo(''); }} className="px-2 py-2 rounded-lg bg-muted text-muted-foreground text-xs">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
 
       <button onClick={openNew} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold flex items-center justify-center gap-2 touch-target active:scale-[0.98] transition-transform">
         <Plus size={20} /> {t('order.new')}
