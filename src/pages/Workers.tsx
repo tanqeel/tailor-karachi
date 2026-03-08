@@ -6,8 +6,15 @@ import { getWhatsAppLink, getWorkerHisaabMessage } from '@/lib/notifications';
 import type { Worker, WorkerAdvance, WorkerPayment } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote, Scissors, PenTool } from 'lucide-react';
+import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote, Scissors, PenTool, ArrowRight, MapPin } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import type { SuitStatus, StatusChange } from '@/lib/store';
+
+const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
+function nextStatus(s: SuitStatus): SuitStatus {
+  const i = ALL_STATUSES.indexOf(s);
+  return ALL_STATUSES[Math.min(i + 1, ALL_STATUSES.length - 1)];
+}
 
 const WORKER_ROLES = [
   { key: 'cutting', en: 'Cutting', ur: 'کٹنگ', emoji: '✂️' },
