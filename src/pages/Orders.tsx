@@ -16,7 +16,7 @@ function nextStatus(s: SuitStatus): SuitStatus {
 }
 
 export default function Orders() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { data, addOrder, updateOrder, deleteOrder } = useData();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
