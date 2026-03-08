@@ -163,16 +163,6 @@ export default function CustomerPortal() {
                           <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-1">{pct}% {isUrdu ? 'مکمل' : 'complete'}</p>
-                        {suit.location && (suit.location.boxNumber || suit.location.lineNumber || suit.location.khannaNumber) && (
-                          <div className="mt-2 bg-muted/50 rounded-lg p-2 flex items-center gap-2 text-[10px]">
-                            <span className="text-base">📦</span>
-                            <div className="space-y-0.5">
-                              {suit.location.boxNumber && <p className="font-medium">{isUrdu ? 'باکس' : 'Box'}: <span className="text-primary font-bold">{suit.location.boxNumber}</span></p>}
-                              {suit.location.lineNumber && <p className="font-medium">{isUrdu ? 'لائن' : 'Line'}: <span className="text-primary font-bold">{suit.location.lineNumber}</span></p>}
-                              {suit.location.khannaNumber && <p className="font-medium">{isUrdu ? 'خانہ' : 'Khanna'}: <span className="text-primary font-bold">{suit.location.khannaNumber}</span></p>}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}

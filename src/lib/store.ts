@@ -46,12 +46,6 @@ export interface StatusChange {
   timestamp: string;
 }
 
-export interface SuitLocation {
-  boxNumber: string;
-  lineNumber: string;
-  khannaNumber: string;
-}
-
 export interface OrderSuit {
   id: string;
   status: SuitStatus;
@@ -60,7 +54,6 @@ export interface OrderSuit {
   designWork: boolean;
   notes: string;
   statusHistory: StatusChange[];
-  location?: SuitLocation;
 }
 
 export interface PaymentRecord {
