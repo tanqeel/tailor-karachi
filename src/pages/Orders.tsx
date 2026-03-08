@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
-import type { Order, OrderSuit, SuitStatus, StatusChange } from '@/lib/store';
+import type { Order, OrderSuit, SuitStatus, StatusChange, SuitLocation } from '@/lib/store';
 import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
 import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, MessageCircle, Printer, Clock, Filter } from 'lucide-react';
+import { Plus, X, MessageCircle, Printer, Clock, Filter, Package, MapPin } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
@@ -235,6 +235,11 @@ export default function Orders() {
                     <div key={suit.id} className="flex items-center gap-1">
                       <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
                       <StatusBadge status={suit.status} onClick={() => cycleSuitStatus(order.id, suit.id)} />
+                      {suit.location && (suit.location.boxNumber || suit.location.lineNumber || suit.location.khannaNumber) && (
+                        <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                          📦{suit.location.boxNumber && ` B${suit.location.boxNumber}`}{suit.location.lineNumber && ` L${suit.location.lineNumber}`}{suit.location.khannaNumber && ` K${suit.location.khannaNumber}`}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -381,6 +386,24 @@ export default function Orders() {
                         <input type="checkbox" checked={suit.designWork} onChange={e => updateSuit(idx, { designWork: e.target.checked })} className="rounded" />
                         {isUrdu ? 'ڈیزائن ورک' : 'Design Work'}
                       </label>
+                      {/* Location fields */}
+                      <div className="border-t border-border pt-2 mt-1">
+                        <p className="text-[10px] text-muted-foreground font-semibold mb-1.5 flex items-center gap-1"><MapPin size={10} /> {isUrdu ? 'جگہ / لوکیشن' : 'Location / Placement'}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground">{isUrdu ? 'باکس نمبر' : 'Box #'}</label>
+                            <input type="text" value={suit.location?.boxNumber || ''} onChange={e => updateSuit(idx, { location: { ...(suit.location || { boxNumber: '', lineNumber: '', khannaNumber: '' }), boxNumber: e.target.value } })} className="w-full px-2 py-1.5 rounded-lg bg-card border border-border text-xs" placeholder="—" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground">{isUrdu ? 'لائن نمبر' : 'Line #'}</label>
+                            <input type="text" value={suit.location?.lineNumber || ''} onChange={e => updateSuit(idx, { location: { ...(suit.location || { boxNumber: '', lineNumber: '', khannaNumber: '' }), lineNumber: e.target.value } })} className="w-full px-2 py-1.5 rounded-lg bg-card border border-border text-xs" placeholder="—" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground">{isUrdu ? 'خانہ نمبر' : 'Khanna #'}</label>
+                            <input type="text" value={suit.location?.khannaNumber || ''} onChange={e => updateSuit(idx, { location: { ...(suit.location || { boxNumber: '', lineNumber: '', khannaNumber: '' }), khannaNumber: e.target.value } })} className="w-full px-2 py-1.5 rounded-lg bg-card border border-border text-xs" placeholder="—" />
+                          </div>
+                        </div>
+                      </div>
                       {editingOrder && (
                         <select value={suit.status} onChange={e => updateSuit(idx, { status: e.target.value as SuitStatus })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
                           {ALL_STATUSES.map(s => (
