@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
-import type { Order, OrderSuit, SuitStatus, StatusChange } from '@/lib/store';
+import type { Order, OrderSuit, SuitStatus, StatusChange, SuitLocation } from '@/lib/store';
 import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
 import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, MessageCircle, Printer, Clock, Filter } from 'lucide-react';
+import { Plus, X, MessageCircle, Printer, Clock, Filter, MapPin } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
@@ -231,10 +231,20 @@ export default function Orders() {
               </div>
               <div className="px-4 pb-3 space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {order.suits.map((suit, i) => (
-                    <div key={suit.id} className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
-                      <StatusBadge status={suit.status} onClick={() => cycleSuitStatus(order.id, suit.id)} />
+                    {order.suits.map((suit, i) => (
+                    <div key={suit.id} className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
+                        <StatusBadge status={suit.status} onClick={() => cycleSuitStatus(order.id, suit.id)} />
+                      </div>
+                      {suit.location && (suit.location.box || suit.location.line || suit.location.khanna) && (
+                        <div className="flex items-center gap-1 text-[9px] text-muted-foreground ml-3">
+                          <MapPin size={8} />
+                          {suit.location.box && <span>{isUrdu ? 'باکس' : 'Box'}: {suit.location.box}</span>}
+                          {suit.location.line && <span>{isUrdu ? 'لائن' : 'Line'}: {suit.location.line}</span>}
+                          {suit.location.khanna && <span>{isUrdu ? 'خانہ' : 'Khanna'}: {suit.location.khanna}</span>}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -306,6 +316,14 @@ export default function Orders() {
                       <StatusBadge status={suit.status} />
                     </div>
                     {worker && <p className="text-[10px] text-muted-foreground mb-2">{isUrdu ? 'کاریگر' : 'Worker'}: {worker.name}</p>}
+                    {suit.location && (suit.location.box || suit.location.line || suit.location.khanna) && (
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2 bg-muted/50 rounded-lg px-2 py-1">
+                        <MapPin size={10} />
+                        {suit.location.box && <span>{isUrdu ? 'باکس' : 'Box'}: {suit.location.box}</span>}
+                        {suit.location.line && <span>{isUrdu ? 'لائن' : 'Line'}: {suit.location.line}</span>}
+                        {suit.location.khanna && <span>{isUrdu ? 'خانہ' : 'Khanna'}: {suit.location.khanna}</span>}
+                      </div>
+                    )}
                     <SuitTimeline suit={suit} t={t} isUrdu={isUrdu} />
                   </div>
                 );
@@ -388,6 +406,35 @@ export default function Orders() {
                           ))}
                         </select>
                       )}
+                      {/* Location tracking */}
+                      <div className="pt-1 border-t border-border/50">
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                          <MapPin size={10} /> {isUrdu ? 'جگہ / مقام' : 'Storage Location'}
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            value={suit.location?.box || ''}
+                            onChange={e => updateSuit(idx, { location: { ...(suit.location || { box: '', line: '', khanna: '' }), box: e.target.value } })}
+                            placeholder={isUrdu ? 'باکس #' : 'Box #'}
+                            className="px-2 py-1.5 rounded-lg bg-card border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                          <input
+                            type="text"
+                            value={suit.location?.line || ''}
+                            onChange={e => updateSuit(idx, { location: { ...(suit.location || { box: '', line: '', khanna: '' }), line: e.target.value } })}
+                            placeholder={isUrdu ? 'لائن #' : 'Line #'}
+                            className="px-2 py-1.5 rounded-lg bg-card border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                          <input
+                            type="text"
+                            value={suit.location?.khanna || ''}
+                            onChange={e => updateSuit(idx, { location: { ...(suit.location || { box: '', line: '', khanna: '' }), khanna: e.target.value } })}
+                            placeholder={isUrdu ? 'خانہ #' : 'Khanna #'}
+                            className="px-2 py-1.5 rounded-lg bg-card border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
