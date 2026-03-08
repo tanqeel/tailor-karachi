@@ -101,6 +101,15 @@ export default function Workers() {
     setShowHisaab(data.workers.find(w => w.id === worker.id) || worker);
   };
 
+  const addPayment = (worker: Worker) => {
+    if (!paymentAmount) return;
+    const pmt: WorkerPayment = { id: generateId(), amount: Number(paymentAmount), date: new Date().toISOString(), note: paymentNote };
+    updateWorker(worker.id, { payments: [...(worker.payments || []), pmt] });
+    setPaymentAmount('');
+    setPaymentNote('');
+    setShowHisaab(data.workers.find(w => w.id === worker.id) || worker);
+  };
+
   const suitTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       full_suit: isUrdu ? 'فل سوٹ' : 'Full Suit',
