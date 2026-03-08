@@ -6,8 +6,15 @@ import { getWhatsAppLink, getWorkerHisaabMessage } from '@/lib/notifications';
 import type { Worker, WorkerAdvance, WorkerPayment } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote, Scissors, PenTool } from 'lucide-react';
+import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote, Scissors, PenTool, ArrowRight, MapPin } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import type { SuitStatus, StatusChange } from '@/lib/store';
+
+const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
+function nextStatus(s: SuitStatus): SuitStatus {
+  const i = ALL_STATUSES.indexOf(s);
+  return ALL_STATUSES[Math.min(i + 1, ALL_STATUSES.length - 1)];
+}
 
 const WORKER_ROLES = [
   { key: 'cutting', en: 'Cutting', ur: 'کٹنگ', emoji: '✂️' },
@@ -22,7 +29,7 @@ const WORKER_ROLES = [
 
 export default function Workers() {
   const { t, isUrdu } = useLang();
-  const { data, addWorker, updateWorker, deleteWorker } = useData();
+  const { data, addWorker, updateWorker, deleteWorker, updateOrder } = useData();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Worker | null>(null);
@@ -51,13 +58,14 @@ export default function Workers() {
     w.name.toLowerCase().includes(search.toLowerCase()) || w.phone.includes(search)
   );
 
-  const getWorkerHistory = (worker: Worker) => {
+  const getWorkerActiveSuits = (worker: Worker) => {
     return data.orders.flatMap(o => {
       const customer = data.customers.find(c => c.id === o.customerId);
       return o.suits
         .filter(s => s.workerId === worker.id)
         .map(s => ({
           orderId: o.id,
+          suitId: s.id,
           customerName: customer?.name || 'Unknown',
           customerId: customer?.customerId || '',
           type: s.type,
@@ -65,10 +73,26 @@ export default function Workers() {
           designWork: s.designWork,
           deadline: o.deadline,
           createdAt: o.createdAt,
+          location: s.location,
           rate: s.type === 'kameez' ? worker.rateKameez : s.type === 'shalwar' ? worker.rateShalwar : worker.rateSuit,
           designRate: s.designWork ? worker.rateDesign : 0,
         }));
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
+
+  const getWorkerHistory = (worker: Worker) => getWorkerActiveSuits(worker);
+
+  const changeSuitStatus = (orderId: string, suitId: string, newStatus: SuitStatus) => {
+    const order = data.orders.find(o => o.id === orderId);
+    if (!order) return;
+    const now = new Date().toISOString();
+    const newSuits = order.suits.map(s => {
+      if (s.id !== suitId) return s;
+      const history: StatusChange[] = [...(s.statusHistory || []), { status: newStatus, timestamp: now }];
+      return { ...s, status: newStatus, statusHistory: history };
+    });
+    const allDelivered = newSuits.every(s => s.status === 'delivered');
+    updateOrder(orderId, { suits: newSuits, deliveredAt: allDelivered ? now : undefined });
   };
 
   const openNew = () => {
@@ -142,7 +166,7 @@ export default function Workers() {
       <div className="space-y-3">
         {filtered.map(worker => {
           const weeklyEarnings = getWorkerEarnings(worker, data.orders, 'weekly');
-          const activeSuits = data.orders.flatMap(o => o.suits).filter(s => s.workerId === worker.id && s.status !== 'delivered').length;
+          const activeItems = getWorkerActiveSuits(worker).filter(s => s.status !== 'delivered');
           const totalCompleted = data.orders.flatMap(o => o.suits).filter(s => s.workerId === worker.id && s.status === 'delivered').length;
 
           return (
@@ -167,11 +191,45 @@ export default function Workers() {
                   )}
                   {worker.experience && <p className="text-[10px] text-muted-foreground mt-0.5">{isUrdu ? 'تجربہ' : 'Exp'}: {worker.experience}</p>}
                   <p className="text-xs text-muted-foreground">
-                    {activeSuits} {isUrdu ? 'فعال' : 'active'} · {totalCompleted} {isUrdu ? 'مکمل' : 'done'} · Rs {weeklyEarnings.toLocaleString()}/{isUrdu ? 'ہفتہ' : 'wk'}
+                    {activeItems.length} {isUrdu ? 'فعال' : 'active'} · {totalCompleted} {isUrdu ? 'مکمل' : 'done'} · Rs {weeklyEarnings.toLocaleString()}/{isUrdu ? 'ہفتہ' : 'wk'}
                   </p>
                 </div>
                 <ChevronRight size={16} className="text-muted-foreground shrink-0" />
               </div>
+
+              {/* Active Assigned Suits */}
+              {activeItems.length > 0 && (
+                <div className="px-4 pb-2 space-y-1.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground">{isUrdu ? 'فعال سوٹ' : 'Active Suits'}</p>
+                  {activeItems.slice(0, 4).map(item => (
+                    <div key={item.suitId} className="flex items-center gap-2 bg-background rounded-lg p-2 border border-border">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold truncate">{item.customerName} <span className="text-muted-foreground font-mono">({item.customerId})</span></p>
+                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                          <span>{suitTypeLabel(item.type)}</span>
+                          {item.designWork && <span className="text-primary">✨</span>}
+                          {item.location && (item.location.box || item.location.line || item.location.khanna) && (
+                            <span className="flex items-center gap-0.5"><MapPin size={8} />{item.location.box && `B${item.location.box}`}{item.location.line && `-L${item.location.line}`}{item.location.khanna && `-K${item.location.khanna}`}</span>
+                          )}
+                        </div>
+                      </div>
+                      <StatusBadge status={item.status} />
+                      {item.status !== 'delivered' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); changeSuitStatus(item.orderId, item.suitId, nextStatus(item.status)); }}
+                          className="px-2 py-1 rounded-lg bg-primary/10 text-primary text-[9px] font-semibold whitespace-nowrap active:scale-95 transition-transform flex items-center gap-0.5"
+                        >
+                          <ArrowRight size={10} /> {t(`status.${nextStatus(item.status)}`)}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {activeItems.length > 4 && (
+                    <p className="text-[10px] text-muted-foreground text-center">+{activeItems.length - 4} {isUrdu ? 'مزید' : 'more'}</p>
+                  )}
+                </div>
+              )}
+
               {/* Rates */}
               <div className="px-4 pb-2 flex flex-wrap gap-1">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{isUrdu ? 'قمیض' : 'Kam'}: Rs {worker.rateKameez}</span>
@@ -462,42 +520,104 @@ export default function Workers() {
       })()}
 
       {/* Work History Modal */}
-      {showHistory && (
+      {showHistory && (() => {
+        const history = getWorkerHistory(showHistory);
+        const activeHistory = history.filter(h => h.status !== 'delivered');
+        const completedHistory = history.filter(h => h.status === 'delivered');
+        return (
         <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowHistory(null)}>
           <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
               <div>
                 <h2 className="font-bold text-lg">{showHistory.name}</h2>
-                <p className="text-xs text-muted-foreground">{isUrdu ? 'ورک ہسٹری' : 'Work History'}</p>
+                <p className="text-xs text-muted-foreground">
+                  {activeHistory.length} {isUrdu ? 'فعال' : 'active'} · {completedHistory.length} {isUrdu ? 'مکمل' : 'completed'}
+                </p>
               </div>
               <button onClick={() => setShowHistory(null)} className="p-2 touch-target"><X size={20} /></button>
             </div>
-            <div className="p-4 space-y-2">
-              {(() => {
-                const history = getWorkerHistory(showHistory);
-                if (history.length === 0) return <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی کام نہیں' : 'No work assigned yet'}</p>;
-                return history.map((item, i) => (
-                  <div key={i} className="bg-background rounded-xl p-3 border border-border">
-                    <div className="flex items-center justify-between mb-1">
-                      <div>
-                        <p className="text-sm font-semibold">{item.customerName}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+            <div className="p-4 space-y-3">
+              {/* Active suits section */}
+              {activeHistory.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-primary mb-2 flex items-center gap-1">
+                    🔥 {isUrdu ? 'فعال / جاری کام' : 'Active / In Progress'} ({activeHistory.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {activeHistory.map((item) => (
+                      <div key={item.suitId} className="bg-background rounded-xl p-3 border border-primary/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">{item.customerName}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+                          </div>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                          <span>{suitTypeLabel(item.type)}</span>
+                          {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
+                          <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
+                          <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
+                          {item.location && (item.location.box || item.location.line || item.location.khanna) && (
+                            <span className="flex items-center gap-0.5"><MapPin size={8} />{item.location.box && `B${item.location.box}`}{item.location.line && `-L${item.location.line}`}{item.location.khanna && `-K${item.location.khanna}`}</span>
+                          )}
+                        </div>
+                        {/* Status change buttons */}
+                        <div className="flex gap-1.5 flex-wrap pt-1 border-t border-border/50">
+                          {ALL_STATUSES.map(s => (
+                            <button
+                              key={s}
+                              onClick={() => changeSuitStatus(item.orderId, item.suitId, s)}
+                              className={`px-2 py-1 rounded-lg text-[9px] font-semibold transition-colors active:scale-95 ${
+                                s === item.status
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground'
+                              }`}
+                            >
+                              {t(`status.${s}`)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <StatusBadge status={item.status} />
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
-                      <span>{suitTypeLabel(item.type)}</span>
-                      {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
-                      <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
-                      <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
-                    </div>
+                    ))}
                   </div>
-                ));
-              })()}
+                </div>
+              )}
+
+              {/* Completed suits section */}
+              {completedHistory.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1">
+                    ✅ {isUrdu ? 'مکمل شدہ' : 'Completed'} ({completedHistory.length})
+                  </h3>
+                  <div className="space-y-1.5">
+                    {completedHistory.map((item) => (
+                      <div key={item.suitId} className="bg-background rounded-xl p-3 border border-border">
+                        <div className="flex items-center justify-between mb-1">
+                          <div>
+                            <p className="text-sm font-semibold">{item.customerName}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">{item.customerId}</p>
+                          </div>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
+                          <span>{suitTypeLabel(item.type)}</span>
+                          {item.designWork && <span className="text-primary">✨ {isUrdu ? 'ڈیزائن' : 'Design'}</span>}
+                          <span>Rs {(item.rate + item.designRate).toLocaleString()}</span>
+                          <span>📅 {new Date(item.deadline).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {history.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی کام نہیں' : 'No work assigned yet'}</p>}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
