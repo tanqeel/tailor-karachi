@@ -206,10 +206,33 @@ export function getWorkerEarnings(worker: Worker, orders: Order[], period: 'dail
   return total;
 }
 
-export function getWorkerAdvancesTotal(worker: Worker, period: 'weekly'): number {
+export function getWorkerAdvancesTotal(worker: Worker, period: 'weekly' | 'all'): number {
+  if (period === 'all') return worker.advances.reduce((sum, a) => sum + a.amount, 0);
   const now = new Date();
   const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   return worker.advances
     .filter(a => new Date(a.date) >= startDate)
     .reduce((sum, a) => sum + a.amount, 0);
+}
+
+export function getWorkerPaymentsTotal(worker: Worker, period: 'weekly' | 'all'): number {
+  if (period === 'all') return (worker.payments || []).reduce((sum, p) => sum + p.amount, 0);
+  const now = new Date();
+  const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  return (worker.payments || [])
+    .filter(p => new Date(p.date) >= startDate)
+    .reduce((sum, p) => sum + p.amount, 0);
+}
+
+export function getWorkerSuitsCount(worker: Worker, orders: Order[], period: 'weekly' | 'all'): number {
+  const now = new Date();
+  const startDate = period === 'all' ? new Date(0) : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  let count = 0;
+  for (const order of orders) {
+    if (new Date(order.createdAt) < startDate) continue;
+    for (const suit of order.suits) {
+      if (suit.workerId === worker.id) count++;
+    }
+  }
+  return count;
 }
