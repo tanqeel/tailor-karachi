@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, generateId } from '@/lib/store';
-import type { Order, OrderSuit, SuitStatus } from '@/lib/store';
+import type { Order, OrderSuit, SuitStatus, StatusChange } from '@/lib/store';
 import { getWhatsAppLink, getDeadlineReminderMessage, getReadyForPickupMessage, getPaymentReminderMessage } from '@/lib/notifications';
 import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, X, MessageCircle, Printer } from 'lucide-react';
+import { Plus, X, MessageCircle, Printer, Clock } from 'lucide-react';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
 
@@ -16,12 +16,44 @@ function nextStatus(s: SuitStatus): SuitStatus {
   return ALL_STATUSES[Math.min(i + 1, ALL_STATUSES.length - 1)];
 }
 
+const statusEmoji: Record<SuitStatus, string> = {
+  received: '📥', cutting: '✂️', stitching: '🧵', finishing: '✨', packed: '📦', ready: '✅', delivered: '🤝',
+};
+
+function SuitTimeline({ suit, t, isUrdu }: { suit: OrderSuit; t: (k: string) => string; isUrdu: boolean }) {
+  const history = suit.statusHistory || [];
+  if (history.length === 0) return null;
+
+  return (
+    <div className="space-y-1 py-2">
+      {history.map((h, i) => {
+        const isLast = i === history.length - 1;
+        return (
+          <div key={i} className="flex items-start gap-2">
+            <div className="flex flex-col items-center">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${isLast ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                {statusEmoji[h.status]}
+              </div>
+              {i < history.length - 1 && <div className="w-0.5 h-4 bg-border" />}
+            </div>
+            <div className="flex-1 min-w-0 pb-1">
+              <p className={`text-xs font-semibold ${isLast ? 'text-primary' : 'text-foreground'}`}>{t(`status.${h.status}`)}</p>
+              <p className="text-[10px] text-muted-foreground">{new Date(h.timestamp).toLocaleString()}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Orders() {
-  const { t, lang } = useLang();
+  const { t, lang, isUrdu } = useLang();
   const { data, addOrder, updateOrder, deleteOrder } = useData();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [showTimeline, setShowTimeline] = useState<Order | null>(null);
 
   // Form state
   const [customerId, setCustomerId] = useState('');
@@ -43,7 +75,10 @@ export default function Orders() {
     setDeadline(new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
     setTotalAmount('');
     setAdvancePaid('');
-    setSuits([{ id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '' }]);
+    setSuits([{
+      id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '',
+      statusHistory: [{ status: 'received', timestamp: new Date().toISOString() }],
+    }]);
     setShowForm(true);
   };
 
@@ -58,7 +93,10 @@ export default function Orders() {
   };
 
   const addSuit = () => {
-    setSuits([...suits, { id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '' }]);
+    setSuits([...suits, {
+      id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '',
+      statusHistory: [{ status: 'received', timestamp: new Date().toISOString() }],
+    }]);
   };
 
   const updateSuit = (idx: number, patch: Partial<OrderSuit>) => {
@@ -86,9 +124,15 @@ export default function Orders() {
   const cycleSuitStatus = (orderId: string, suitId: string) => {
     const order = data.orders.find(o => o.id === orderId);
     if (!order) return;
-    const newSuits = order.suits.map(s => s.id === suitId ? { ...s, status: nextStatus(s.status) } : s);
+    const now = new Date().toISOString();
+    const newSuits = order.suits.map(s => {
+      if (s.id !== suitId) return s;
+      const newStatus = nextStatus(s.status);
+      const history: StatusChange[] = [...(s.statusHistory || []), { status: newStatus, timestamp: now }];
+      return { ...s, status: newStatus, statusHistory: history };
+    });
     const allDelivered = newSuits.every(s => s.status === 'delivered');
-    updateOrder(orderId, { suits: newSuits, deliveredAt: allDelivered ? new Date().toISOString() : undefined });
+    updateOrder(orderId, { suits: newSuits, deliveredAt: allDelivered ? now : undefined });
   };
 
   const handlePrint = (order: Order) => {
@@ -133,7 +177,7 @@ export default function Orders() {
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{order.suits.length} {t('order.suits')}</span>
                   <span>Rs {order.totalAmount.toLocaleString()}</span>
-                  {balance > 0 && <span className="text-destructive font-semibold">Due: Rs {balance.toLocaleString()}</span>}
+                  {balance > 0 && <span className="text-destructive font-semibold">{isUrdu ? 'بقایا' : 'Due'}: Rs {balance.toLocaleString()}</span>}
                 </div>
               </div>
               <div className="px-4 pb-3 space-y-2">
@@ -148,33 +192,37 @@ export default function Orders() {
                 <div className="flex gap-2 flex-wrap">
                   {/* Print Receipt */}
                   <button onClick={() => handlePrint(order)} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold active:scale-95 transition-transform">
-                    <Printer size={12} /> {lang === 'ur' ? 'پرنٹ' : 'Print'}
+                    <Printer size={12} /> {isUrdu ? 'پرنٹ' : 'Print'}
                   </button>
                   {/* WhatsApp Receipt */}
                   {customer?.phone && (
                     <a href={getReceiptWhatsAppLink({ order, customer, lang })} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
-                      <MessageCircle size={12} /> {lang === 'ur' ? 'رسید بھیجیں' : 'Send Receipt'}
+                      <MessageCircle size={12} /> {isUrdu ? 'رسید بھیجیں' : 'Send Receipt'}
                     </a>
                   )}
+                  {/* Timeline */}
+                  <button onClick={() => setShowTimeline(order)} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-info/10 text-info text-[10px] font-semibold active:scale-95 transition-transform">
+                    <Clock size={12} /> {isUrdu ? 'ٹائم لائن' : 'Timeline'}
+                  </button>
                   {customer?.phone && (
                     <>
                       {(dlStatus === 'overdue' || dlStatus === 'urgent' || dlStatus === 'approaching') && (
                         <a href={getWhatsAppLink(customer.phone, getDeadlineReminderMessage(customer.name, order.deadline, lang))} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
-                          <MessageCircle size={12} /> {lang === 'ur' ? 'یاد دہانی' : 'Reminder'}
+                          <MessageCircle size={12} /> {isUrdu ? 'یاد دہانی' : 'Reminder'}
                         </a>
                       )}
                       {order.suits.every(s => s.status === 'ready' || s.status === 'delivered') && !order.deliveredAt && (
                         <a href={getWhatsAppLink(customer.phone, getReadyForPickupMessage(customer.name, lang))} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
-                          <MessageCircle size={12} /> {lang === 'ur' ? 'تیار پیغام' : 'Ready Msg'}
+                          <MessageCircle size={12} /> {isUrdu ? 'تیار پیغام' : 'Ready Msg'}
                         </a>
                       )}
                       {balance > 0 && (
                         <a href={getWhatsAppLink(customer.phone, getPaymentReminderMessage(customer.name, balance, lang))} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/10 text-warning text-[10px] font-semibold active:scale-95 transition-transform">
-                          <MessageCircle size={12} /> {lang === 'ur' ? 'بقایا' : 'Payment'}
+                          <MessageCircle size={12} /> {isUrdu ? 'بقایا' : 'Payment'}
                         </a>
                       )}
                     </>
@@ -184,8 +232,45 @@ export default function Orders() {
             </div>
           );
         })}
-        {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No orders found</p>}
+        {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">{isUrdu ? 'کوئی آرڈر نہیں' : 'No orders found'}</p>}
       </div>
+
+      {/* Timeline Modal */}
+      {showTimeline && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowTimeline(null)}>
+          <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
+              <div>
+                <h2 className="font-bold text-lg">{isUrdu ? 'آرڈر ٹائم لائن' : 'Order Timeline'}</h2>
+                <p className="text-xs text-muted-foreground">{data.customers.find(c => c.id === showTimeline.customerId)?.name}</p>
+              </div>
+              <button onClick={() => setShowTimeline(null)} className="p-2 touch-target"><X size={20} /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              {showTimeline.suits.map((suit, i) => {
+                const suitTypes: Record<string, string> = { full_suit: isUrdu ? 'فل سوٹ' : 'Full Suit', kameez: isUrdu ? 'قمیض' : 'Kameez', shalwar: isUrdu ? 'شلوار' : 'Shalwar' };
+                const worker = suit.workerId ? data.workers.find(w => w.id === suit.workerId) : null;
+                return (
+                  <div key={suit.id} className="bg-background rounded-xl p-4 border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-sm">{isUrdu ? 'سوٹ' : 'Suit'} #{i + 1} — {suitTypes[suit.type]}</h3>
+                      <StatusBadge status={suit.status} />
+                    </div>
+                    {worker && <p className="text-[10px] text-muted-foreground mb-2">{isUrdu ? 'کاریگر' : 'Worker'}: {worker.name}</p>}
+                    <SuitTimeline suit={suit} t={t} isUrdu={isUrdu} />
+                  </div>
+                );
+              })}
+              {showTimeline.deliveredAt && (
+                <div className="bg-success/5 border border-success/20 rounded-xl p-4 text-center">
+                  <p className="text-sm font-semibold text-success">🤝 {isUrdu ? 'حوالے کیا گیا' : 'Delivered'}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(showTimeline.deliveredAt).toLocaleString()}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Order Form Modal */}
       {showForm && (
@@ -196,7 +281,6 @@ export default function Orders() {
               <button onClick={() => setShowForm(false)} className="p-2 touch-target"><X size={20} /></button>
             </div>
             <div className="p-4 space-y-4">
-              {/* Customer Select */}
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('nav.customers')} *</label>
                 <select value={customerId} onChange={e => setCustomerId(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target">
@@ -205,14 +289,10 @@ export default function Orders() {
                   ))}
                 </select>
               </div>
-
-              {/* Deadline */}
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('order.delivery')} *</label>
                 <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
               </div>
-
-              {/* Amounts */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground font-medium">{t('common.total')} (Rs)</label>
@@ -223,36 +303,34 @@ export default function Orders() {
                   <input type="number" value={advancePaid} onChange={e => setAdvancePaid(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
                 </div>
               </div>
-
-              {/* Suits */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-sm">{t('order.suits')}</h3>
-                  <button onClick={addSuit} className="text-xs text-primary font-semibold px-3 py-1 rounded-lg bg-primary/10 touch-target">+ Add Suit</button>
+                  <button onClick={addSuit} className="text-xs text-primary font-semibold px-3 py-1 rounded-lg bg-primary/10 touch-target">+ {isUrdu ? 'سوٹ شامل کریں' : 'Add Suit'}</button>
                 </div>
                 <div className="space-y-3">
                   {suits.map((suit, idx) => (
                     <div key={suit.id} className="bg-background rounded-xl p-3 border border-border space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">Suit #{idx + 1}</span>
+                        <span className="text-xs font-semibold">{isUrdu ? 'سوٹ' : 'Suit'} #{idx + 1}</span>
                         {suits.length > 1 && (
-                          <button onClick={() => removeSuit(idx)} className="text-destructive text-xs">Remove</button>
+                          <button onClick={() => removeSuit(idx)} className="text-destructive text-xs">{isUrdu ? 'ہٹائیں' : 'Remove'}</button>
                         )}
                       </div>
                       <select value={suit.type} onChange={e => updateSuit(idx, { type: e.target.value as any })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
-                        <option value="full_suit">Full Suit</option>
-                        <option value="kameez">Kameez Only</option>
-                        <option value="shalwar">Shalwar Only</option>
+                        <option value="full_suit">{isUrdu ? 'فل سوٹ' : 'Full Suit'}</option>
+                        <option value="kameez">{isUrdu ? 'صرف قمیض' : 'Kameez Only'}</option>
+                        <option value="shalwar">{isUrdu ? 'صرف شلوار' : 'Shalwar Only'}</option>
                       </select>
                       <select value={suit.workerId || ''} onChange={e => updateSuit(idx, { workerId: e.target.value || undefined })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
-                        <option value="">Assign Worker...</option>
+                        <option value="">{isUrdu ? 'کاریگر منتخب کریں...' : 'Assign Worker...'}</option>
                         {data.workers.filter(w => w.active).map(w => (
                           <option key={w.id} value={w.id}>{w.name}</option>
                         ))}
                       </select>
                       <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" checked={suit.designWork} onChange={e => updateSuit(idx, { designWork: e.target.checked })} className="rounded" />
-                        Design Work
+                        {isUrdu ? 'ڈیزائن ورک' : 'Design Work'}
                       </label>
                       {editingOrder && (
                         <select value={suit.status} onChange={e => updateSuit(idx, { status: e.target.value as SuitStatus })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
@@ -265,7 +343,6 @@ export default function Orders() {
                   ))}
                 </div>
               </div>
-
               <div className="flex gap-3 pt-2">
                 {editingOrder && (
                   <button onClick={() => { deleteOrder(editingOrder.id); setShowForm(false); }} className="flex-1 py-3 rounded-xl border border-destructive text-destructive font-semibold touch-target active:scale-95">
