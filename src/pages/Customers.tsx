@@ -3,9 +3,11 @@ import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { emptyMeasurements, generateId } from '@/lib/store';
 import type { Customer, Measurements, MeasurementRecord } from '@/lib/store';
+import { customerSchema, cleanInput } from '@/lib/validation';
 import SearchBar from '@/components/SearchBar';
 import { Plus, Phone, ChevronRight, X, User, MapPin, History } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import { toast } from 'sonner';
 
 const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean) => [
   { section: t('measurements.kameez'), items: [
@@ -94,9 +96,18 @@ export default function Customers() {
   };
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    const trimmedName = cleanInput(name, 100);
+    const trimmedPhone = cleanInput(phone, 20);
+    const trimmedAddress = cleanInput(address, 300);
+
+    const validation = customerSchema.safeParse({ name: trimmedName, phone: trimmedPhone, address: trimmedAddress });
+    if (!validation.success) {
+      const firstError = validation.error.errors[0]?.message || 'Invalid input';
+      toast.error(firstError);
+      return;
+    }
+
     if (editing) {
-      // Save current measurements to history if they changed
       const oldM = editing.measurements;
       const newM = measurements;
       const changed = Object.keys(newM).some(k => (newM as any)[k] !== (oldM as any)[k]);
@@ -109,9 +120,9 @@ export default function Customers() {
           note: isUrdu ? 'پرانے ناپ' : 'Previous measurements',
         }];
       }
-      updateCustomer(editing.id, { name, phone, address, measurements, measurementHistory: history });
+      updateCustomer(editing.id, { name: trimmedName, phone: trimmedPhone, address: trimmedAddress, measurements, measurementHistory: history });
     } else {
-      addCustomer({ name, phone, address, measurements });
+      addCustomer({ name: trimmedName, phone: trimmedPhone, address: trimmedAddress, measurements });
     }
     setShowForm(false);
   };
