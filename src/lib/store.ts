@@ -123,6 +123,17 @@ export function loadData(): AppData {
           statusHistory: s.statusHistory || [{ status: s.status, timestamp: o.createdAt }],
         })),
       }));
+      // Migrate old workers without role/experience
+      data.workers = (data.workers || []).map((w: any) => ({
+        ...w,
+        role: w.role || '',
+        experience: w.experience || '',
+      }));
+      // Migrate old orders without notes
+      data.orders = data.orders.map((o: any) => ({
+        ...o,
+        notes: o.notes || '',
+      }));
       return data;
     }
   } catch {}
