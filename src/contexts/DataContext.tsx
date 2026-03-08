@@ -5,7 +5,7 @@ import { loadDataFromDB, saveDataToDB } from '@/lib/db';
 interface DataContextType {
   data: AppData;
   loading: boolean;
-  addCustomer: (c: Omit<Customer, 'id' | 'customerId' | 'createdAt'>) => Customer;
+  addCustomer: (c: Omit<Customer, 'id' | 'customerId' | 'createdAt' | 'measurementHistory'>) => Customer;
   updateCustomer: (id: string, c: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
   addOrder: (o: Omit<Order, 'id' | 'createdAt'>) => Order;
@@ -29,12 +29,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const persist = useCallback((d: AppData) => { _setData(d); saveDataToDB(d); }, []);
 
-  const addCustomer = useCallback((c: Omit<Customer, 'id' | 'customerId' | 'createdAt'>) => {
+  const addCustomer = useCallback((c: Omit<Customer, 'id' | 'customerId' | 'createdAt' | 'measurementHistory'>) => {
     const customer: Customer = {
       ...c,
       id: generateId(),
       customerId: generateCustomerId(data.customers),
+      address: c.address || '',
       measurements: c.measurements || emptyMeasurements,
+      measurementHistory: [],
       createdAt: new Date().toISOString(),
     };
     const next = { ...data, customers: [...data.customers, customer] };

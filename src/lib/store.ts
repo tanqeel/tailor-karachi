@@ -9,6 +9,8 @@ export interface Measurements {
   shoulder: string;
   sleeve: string;
   collar: string;
+  teera: string;
+  kamar: string;
   daman: string;
   cuff: string;
   frontPocket: string;
@@ -21,13 +23,27 @@ export interface Measurements {
   notes: string;
 }
 
+export interface MeasurementRecord {
+  id: string;
+  measurements: Measurements;
+  date: string;
+  note: string;
+}
+
 export interface Customer {
   id: string;
-  customerId: string; // e.g. KT-0001
+  customerId: string; // e.g. KT-001
   name: string;
   phone: string;
+  address: string;
   measurements: Measurements;
+  measurementHistory: MeasurementRecord[];
   createdAt: string;
+}
+
+export interface StatusChange {
+  status: SuitStatus;
+  timestamp: string;
 }
 
 export interface OrderSuit {
@@ -37,6 +53,7 @@ export interface OrderSuit {
   type: 'kameez' | 'shalwar' | 'full_suit';
   designWork: boolean;
   notes: string;
+  statusHistory: StatusChange[];
 }
 
 export interface Order {
@@ -79,14 +96,32 @@ export interface AppData {
 const STORAGE_KEY = 'karachi-tailors-data';
 
 export const emptyMeasurements: Measurements = {
-  kameezLength: '', chest: '', shoulder: '', sleeve: '', collar: '', daman: '', cuff: '', frontPocket: '',
+  kameezLength: '', chest: '', shoulder: '', sleeve: '', collar: '', teera: '', kamar: '', daman: '', cuff: '', frontPocket: '',
   shalwarLength: '', waist: '', hip: '', pancha: '', notes: '',
 };
 
 export function loadData(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const data = JSON.parse(raw);
+      // Migrate old customers without address/measurementHistory
+      data.customers = data.customers.map((c: any) => ({
+        ...c,
+        address: c.address || '',
+        measurementHistory: c.measurementHistory || [],
+        measurements: { ...emptyMeasurements, ...c.measurements },
+      }));
+      // Migrate old suits without statusHistory
+      data.orders = data.orders.map((o: any) => ({
+        ...o,
+        suits: o.suits.map((s: any) => ({
+          ...s,
+          statusHistory: s.statusHistory || [{ status: s.status, timestamp: o.createdAt }],
+        })),
+      }));
+      return data;
+    }
   } catch {}
   return { customers: [], orders: [], workers: [] };
 }
@@ -97,7 +132,7 @@ export function saveData(data: AppData) {
 
 export function generateCustomerId(customers: Customer[]): string {
   const num = customers.length + 1;
-  return `KT-${String(num).padStart(4, '0')}`;
+  return `KT-${String(num).padStart(3, '0')}`;
 }
 
 export function generateId(): string {
