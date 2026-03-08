@@ -29,7 +29,7 @@ const WORKER_ROLES = [
 
 export default function Workers() {
   const { t, isUrdu } = useLang();
-  const { data, addWorker, updateWorker, deleteWorker } = useData();
+  const { data, addWorker, updateWorker, deleteWorker, updateOrder } = useData();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Worker | null>(null);
