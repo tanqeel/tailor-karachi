@@ -52,3 +52,17 @@ export function getPaymentReminderMessage(customerName: string, balance: number,
   }
   return `Assalam o Alaikum ${customerName}, your pending balance is Rs ${balance.toLocaleString()}. Please arrange payment. Thank you - Karachi Tailors`;
 }
+
+export function getWorkerHisaabMessage(
+  workerName: string,
+  earned: number,
+  advances: number,
+  netPayable: number,
+  suitsDone: number,
+  lang: 'en' | 'ur'
+): string {
+  if (lang === 'ur') {
+    return `السلام علیکم ${workerName}،\n\n📊 *ہفتہ وار حساب*\n\n✂️ مکمل سوٹ: ${suitsDone}\n💰 کمائی: Rs ${earned.toLocaleString()}\n🔻 پیشگی: Rs ${advances.toLocaleString()}\n━━━━━━━━━━━\n✅ قابل ادائیگی: Rs ${netPayable.toLocaleString()}\n\nشکریہ - کراچی ٹیلرز`;
+  }
+  return `Assalam o Alaikum ${workerName},\n\n📊 *Weekly Hisaab*\n\n✂️ Suits Completed: ${suitsDone}\n💰 Earned: Rs ${earned.toLocaleString()}\n🔻 Advances: Rs ${advances.toLocaleString()}\n━━━━━━━━━━━\n✅ Net Payable: Rs ${netPayable.toLocaleString()}\n\nThank you - Karachi Tailors`;
+}
