@@ -52,12 +52,7 @@ function MeasurementForm({ measurements, onChange, t, isUrdu }: { measurements: 
       ))}
       <div>
         <label className="text-xs text-muted-foreground">{isUrdu ? 'نوٹس' : 'Notes'}</label>
-        <textarea
-          value={measurements.notes}
-          onChange={e => onChange({ ...measurements, notes: e.target.value })}
-          className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          rows={2}
-        />
+        <VoiceInput value={measurements.notes} onChange={v => onChange({ ...measurements, notes: v })} multiline rows={2} append />
       </div>
     </div>
   );

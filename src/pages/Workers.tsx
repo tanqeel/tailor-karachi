@@ -181,20 +181,20 @@ export default function Workers() {
             <div className="p-4 space-y-4">
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('worker.name')} *</label>
-                <input value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                <VoiceInput value={name} onChange={setName} />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('common.phone')}</label>
-                <input value={phone} onChange={e => setPhone(e.target.value)} type="tel" className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                <VoiceInput value={phone} onChange={setPhone} type="tel" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'کردار' : 'Role'}</label>
-                  <input value={role} onChange={e => setRole(e.target.value)} placeholder={isUrdu ? 'مثلاً ماسٹر درزی' : 'e.g. Master Tailor'} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  <VoiceInput value={role} onChange={setRole} placeholder={isUrdu ? 'مثلاً ماسٹر درزی' : 'e.g. Master Tailor'} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'تجربہ' : 'Experience'}</label>
-                  <input value={experience} onChange={e => setExperience(e.target.value)} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" />
+                  <VoiceInput value={experience} onChange={setExperience} placeholder={isUrdu ? 'مثلاً 5 سال' : 'e.g. 5 years'} />
                 </div>
               </div>
               <div>

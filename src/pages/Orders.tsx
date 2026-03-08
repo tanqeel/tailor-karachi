@@ -394,7 +394,7 @@ export default function Orders() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'نوٹس' : 'Notes'}</label>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder={isUrdu ? 'آرڈر کے بارے میں نوٹس...' : 'Order notes...'} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target resize-none" />
+                <VoiceInput value={notes} onChange={setNotes} multiline rows={2} placeholder={isUrdu ? 'آرڈر کے بارے میں نوٹس...' : 'Order notes...'} append />
               </div>
               <div className="flex gap-3 pt-2">
                 {editingOrder && (
