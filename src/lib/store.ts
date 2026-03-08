@@ -64,6 +64,7 @@ export interface Order {
   advancePaid: number;
   paymentStatus: 'advance' | 'partial' | 'paid' | 'pending';
   deadline: string;
+  notes: string;
   createdAt: string;
   deliveredAt?: string;
 }
