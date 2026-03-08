@@ -48,7 +48,7 @@ export default function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 bg-primary text-primary-foreground shadow-md">
-      <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
+      <div className={`flex items-center justify-between px-4 py-3 max-w-lg mx-auto ${isUrdu ? 'flex-row-reverse' : ''}`}>
         <h1 className="text-lg font-bold tracking-tight">{t('app.name')}</h1>
         <div className="flex items-center gap-1">
           {isSupported && (

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 type Lang = 'en' | 'ur';
 
@@ -46,10 +46,15 @@ const translations: Record<string, Record<Lang, string>> = {
   'measurements.shoulder': { en: 'Shoulder', ur: 'کندھا' },
   'measurements.sleeve': { en: 'Sleeve', ur: 'آستین' },
   'measurements.collar': { en: 'Collar', ur: 'کالر' },
+  'measurements.teera': { en: 'Teera', ur: 'تیرا' },
+  'measurements.kamar': { en: 'Kamar', ur: 'کمر' },
   'measurements.daman': { en: 'Daman', ur: 'دامن' },
+  'measurements.cuff': { en: 'Cuff', ur: 'کف' },
+  'measurements.frontPocket': { en: 'Front Pocket', ur: 'جیب' },
   'measurements.waist': { en: 'Waist', ur: 'کمر' },
   'measurements.hip': { en: 'Hip', ur: 'ہپ' },
   'measurements.pancha': { en: 'Pancha', ur: 'پانچا' },
+  'measurements.notes': { en: 'Notes', ur: 'نوٹس' },
   'order.new': { en: 'New Order', ur: 'نیا آرڈر' },
   'order.suits': { en: 'Suits', ur: 'سوٹ' },
   'order.delivery': { en: 'Delivery Date', ur: 'تاریخ حوالگی' },
@@ -85,6 +90,20 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('kt-lang') as Lang) || 'ur');
+
+  // Set dir and font on html element based on language
+  useEffect(() => {
+    const html = document.documentElement;
+    if (lang === 'ur') {
+      html.setAttribute('dir', 'rtl');
+      html.classList.add('font-urdu');
+      html.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+    } else {
+      html.setAttribute('dir', 'ltr');
+      html.classList.remove('font-urdu');
+      html.style.fontFamily = "'Inter', sans-serif";
+    }
+  }, [lang]);
 
   const toggleLang = useCallback(() => {
     setLang(prev => {

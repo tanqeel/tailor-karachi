@@ -113,7 +113,6 @@
 @layer utilities {
   .font-urdu {
     font-family: 'Noto Nastaliq Urdu', serif;
-    direction: rtl;
   }
   .touch-target {
     @apply min-h-[48px] min-w-[48px];
@@ -125,6 +124,26 @@
   .status-packed { @apply bg-accent text-accent-foreground; }
   .status-ready { @apply bg-success text-success-foreground; }
   .status-delivered { @apply bg-muted text-muted-foreground; }
+}
+
+/* RTL-aware overrides */
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+[dir="rtl"] .ml-1 { margin-left: 0; margin-right: 0.25rem; }
+[dir="rtl"] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
+[dir="rtl"] .ml-3 { margin-left: 0; margin-right: 0.75rem; }
+[dir="rtl"] .mr-1 { margin-right: 0; margin-left: 0.25rem; }
+[dir="rtl"] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+[dir="rtl"] .pl-10 { padding-left: 0; padding-right: 2.5rem; }
+[dir="rtl"] .pr-4 { padding-right: 0; padding-left: 1rem; }
+[dir="rtl"] .left-3 { left: auto; right: 0.75rem; }
+[dir="rtl"] .right-1 { right: auto; left: 0.25rem; }
+[dir="rtl"] .right-2 { right: auto; left: 0.5rem; }
+[dir="rtl"] .translate-x-5 { transform: translateX(-1.25rem); }
+[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
 }
 
 /* Print styles */

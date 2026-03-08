@@ -47,18 +47,17 @@ export default function SearchBar({ value, onChange, placeholder }: Props) {
   return (
     <div className="relative flex items-center gap-2">
       <div className="relative flex-1">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Search size={18} className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground ${isUrdu ? 'right-3' : 'left-3'}`} />
         <input
           type="text"
           value={listening && transcript ? transcript : value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder || t('common.search')}
-          className="w-full pl-10 pr-4 py-3 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target"
-          dir={isUrdu ? 'rtl' : 'ltr'}
+          className={`w-full py-3 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target ${isUrdu ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
           readOnly={listening}
         />
         {listening && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-destructive font-semibold animate-pulse">
+          <span className={`absolute top-1/2 -translate-y-1/2 text-[10px] text-destructive font-semibold animate-pulse ${isUrdu ? 'left-3' : 'right-3'}`}>
             {isUrdu ? '🎤 سن رہے ہیں...' : '🎤 Listening...'}
           </span>
         )}

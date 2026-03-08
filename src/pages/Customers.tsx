@@ -14,13 +14,15 @@ const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean) => [
     { key: 'shoulder', label: t('measurements.shoulder') },
     { key: 'sleeve', label: t('measurements.sleeve') },
     { key: 'collar', label: t('measurements.collar') },
-    { key: 'teera', label: isUrdu ? 'تیرا' : 'Teera' },
-    { key: 'kamar', label: isUrdu ? 'کمر' : 'Kamar' },
+    { key: 'teera', label: t('measurements.teera') },
+    { key: 'kamar', label: t('measurements.kamar') },
     { key: 'daman', label: t('measurements.daman') },
+    { key: 'cuff', label: t('measurements.cuff') },
+    { key: 'frontPocket', label: t('measurements.frontPocket') },
   ]},
   { section: t('measurements.shalwar'), items: [
     { key: 'shalwarLength', label: t('measurements.length') },
-    { key: 'pancha', label: isUrdu ? 'پونچا' : 'Pooncha' },
+    { key: 'pancha', label: t('measurements.pancha') },
     { key: 'waist', label: t('measurements.waist') },
     { key: 'hip', label: t('measurements.hip') },
   ]},
@@ -257,8 +259,13 @@ function MeasurementDisplay({ m, isUrdu }: { m: Measurements; isUrdu: boolean })
     { label: isUrdu ? 'کالر' : 'Collar', value: m.collar },
     { label: isUrdu ? 'تیرا' : 'Teera', value: m.teera },
     { label: isUrdu ? 'کمر' : 'Kamar', value: m.kamar },
+    { label: isUrdu ? 'دامن' : 'Daman', value: m.daman },
+    { label: isUrdu ? 'کف' : 'Cuff', value: m.cuff },
+    { label: isUrdu ? 'جیب' : 'Pocket', value: m.frontPocket },
     { label: isUrdu ? 'شلوار' : 'Shalwar', value: m.shalwarLength },
     { label: isUrdu ? 'پونچا' : 'Pooncha', value: m.pancha },
+    { label: isUrdu ? 'کمر' : 'Waist', value: m.waist },
+    { label: isUrdu ? 'ہپ' : 'Hip', value: m.hip },
   ].filter(i => i.value);
 
   if (items.length === 0) return <p className="text-xs text-muted-foreground">{isUrdu ? 'خالی' : 'Empty'}</p>;
