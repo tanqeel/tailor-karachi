@@ -21,7 +21,7 @@ const moreNav = [
   { path: '/settings', icon: Settings2, key: 'nav.settings' },
 ];
 
-const springConfig = { type: 'spring', stiffness: 400, damping: 28 };
+const springConfig = { type: 'spring' as const, stiffness: 400, damping: 28 };
 
 export default function BottomNav() {
   const location = useLocation();
