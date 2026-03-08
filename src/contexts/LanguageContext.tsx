@@ -86,6 +86,20 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('kt-lang') as Lang) || 'ur');
 
+  // Set dir and font on html element based on language
+  useEffect(() => {
+    const html = document.documentElement;
+    if (lang === 'ur') {
+      html.setAttribute('dir', 'rtl');
+      html.classList.add('font-urdu');
+      html.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+    } else {
+      html.setAttribute('dir', 'ltr');
+      html.classList.remove('font-urdu');
+      html.style.fontFamily = "'Inter', sans-serif";
+    }
+  }, [lang]);
+
   const toggleLang = useCallback(() => {
     setLang(prev => {
       const next = prev === 'en' ? 'ur' : 'en';
