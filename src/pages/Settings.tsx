@@ -62,20 +62,46 @@ export default function Settings() {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const imported: AppData = JSON.parse(reader.result as string);
-        if (imported.customers && imported.orders && imported.workers) setData(imported);
-      } catch {}
-    };
-    reader.readAsText(file);
+    importBackupFromFile(file).then(imported => {
+      if (imported) {
+        setData(imported);
+        toast.success(isUrdu ? 'بیک اپ بحال ہو گیا!' : 'Backup restored successfully!');
+      } else {
+        toast.error(isUrdu ? 'غلط فائل فارمیٹ' : 'Invalid backup file format');
+      }
+    });
     e.target.value = '';
   };
 
   const handleRestore = (key: string) => {
     const restored = restoreBackup(key);
-    if (restored) { setData(restored); setShowBackups(false); }
+    if (restored) {
+      setData(restored);
+      toast.success(isUrdu ? 'بیک اپ بحال ہو گیا!' : 'Backup restored!');
+      setShowBackups(false);
+    }
+  };
+
+  const handleManualBackup = () => {
+    performManualBackup(data);
+    setBackups(listBackups());
+    toast.success(isUrdu ? 'بیک اپ بنایا گیا!' : 'Manual backup created!');
+  };
+
+  const handleDeleteBackup = (key: string) => {
+    deleteBackup(key);
+    setBackups(listBackups());
+    toast.success(isUrdu ? 'بیک اپ حذف ہو گیا' : 'Backup deleted');
+  };
+
+  const handleToggleAutoBackup = () => {
+    const next = !autoBackup;
+    setAutoBackup(next);
+    setAutoBackupEnabled(next);
+    toast.success(next 
+      ? (isUrdu ? 'خودکار بیک اپ فعال' : 'Auto backup enabled')
+      : (isUrdu ? 'خودکار بیک اپ غیر فعال' : 'Auto backup disabled')
+    );
   };
 
   const handleClearAll = () => { setData({ customers: [], orders: [], workers: [] }); setShowClear(false); };
