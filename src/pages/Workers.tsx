@@ -359,12 +359,17 @@ export default function Workers() {
                       <h4 className="text-xs text-muted-foreground mb-1">{isUrdu ? 'حالیہ پیشگی' : 'Recent Advances'}</h4>
                       <div className="space-y-1">
                         {showHisaab.advances.slice(-10).reverse().map(a => (
-                          <div key={a.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
-                            <div>
+                          <div key={a.id} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
+                            <div className="flex-1 min-w-0">
                               <span className="text-muted-foreground">{new Date(a.date).toLocaleDateString()}</span>
                               {a.note && <span className="text-[10px] text-muted-foreground ml-2">({a.note})</span>}
                             </div>
-                            <span className="font-semibold text-destructive">Rs {a.amount.toLocaleString()}</span>
+                            <span className="font-semibold text-destructive mr-2">Rs {a.amount.toLocaleString()}</span>
+                            <button onClick={() => {
+                              const updated = showHisaab.advances.filter(x => x.id !== a.id);
+                              updateWorker(showHisaab.id, { advances: updated });
+                              setShowHisaab({ ...showHisaab, advances: updated });
+                            }} className="text-destructive/60 hover:text-destructive p-1 touch-target"><X size={14} /></button>
                           </div>
                         ))}
                       </div>
@@ -388,12 +393,17 @@ export default function Workers() {
                       <h4 className="text-xs text-muted-foreground mb-1">{isUrdu ? 'حالیہ ادائیگی' : 'Recent Payments'}</h4>
                       <div className="space-y-1">
                         {(showHisaab.payments || []).slice(-10).reverse().map(p => (
-                          <div key={p.id} className="flex justify-between text-sm py-1 border-b border-border last:border-0">
-                            <div>
+                          <div key={p.id} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
+                            <div className="flex-1 min-w-0">
                               <span className="text-muted-foreground">{new Date(p.date).toLocaleDateString()}</span>
                               {p.note && <span className="text-[10px] text-muted-foreground ml-2">({p.note})</span>}
                             </div>
-                            <span className="font-semibold text-success">Rs {p.amount.toLocaleString()}</span>
+                            <span className="font-semibold text-success mr-2">Rs {p.amount.toLocaleString()}</span>
+                            <button onClick={() => {
+                              const updated = (showHisaab.payments || []).filter(x => x.id !== p.id);
+                              updateWorker(showHisaab.id, { payments: updated });
+                              setShowHisaab({ ...showHisaab, payments: updated });
+                            }} className="text-destructive/60 hover:text-destructive p-1 touch-target"><X size={14} /></button>
                           </div>
                         ))}
                       </div>

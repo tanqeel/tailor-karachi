@@ -229,7 +229,14 @@ export default function Customers() {
                 <div key={record.id} className="bg-muted/30 border border-border rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-muted-foreground">{new Date(record.date).toLocaleDateString()}</span>
-                    <span className="text-[10px] text-muted-foreground">{record.note}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">{record.note}</span>
+                      <button onClick={() => {
+                        const updated = (showHistory.measurementHistory || []).filter(r => r.id !== record.id);
+                        updateCustomer(showHistory.id, { measurementHistory: updated });
+                        setShowHistory({ ...showHistory, measurementHistory: updated });
+                      }} className="text-destructive/60 hover:text-destructive p-1 touch-target"><X size={14} /></button>
+                    </div>
                   </div>
                   <MeasurementDisplay m={record.measurements} isUrdu={isUrdu} />
                 </div>
