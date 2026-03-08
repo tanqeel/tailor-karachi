@@ -136,6 +136,7 @@ export function loadData(): AppData {
         ...w,
         role: w.role || '',
         experience: w.experience || '',
+        payments: w.payments || [],
       }));
       // Migrate old orders without notes
       data.orders = data.orders.map((o: any) => ({

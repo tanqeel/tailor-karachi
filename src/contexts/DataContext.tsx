@@ -11,7 +11,7 @@ interface DataContextType {
   addOrder: (o: Omit<Order, 'id' | 'createdAt'>) => Order;
   updateOrder: (id: string, o: Partial<Order>) => void;
   deleteOrder: (id: string) => void;
-  addWorker: (w: Omit<Worker, 'id' | 'advances' | 'active'>) => Worker;
+  addWorker: (w: Omit<Worker, 'id' | 'advances' | 'payments' | 'active'>) => Worker;
   updateWorker: (id: string, w: Partial<Worker>) => void;
   deleteWorker: (id: string) => void;
   setData: (d: AppData) => void;
@@ -66,8 +66,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     persist({ ...data, orders: data.orders.filter(x => x.id !== id) });
   }, [data, persist]);
 
-  const addWorker = useCallback((w: Omit<Worker, 'id' | 'advances' | 'active'>) => {
-    const worker: Worker = { ...w, id: generateId(), advances: [], active: true };
+  const addWorker = useCallback((w: Omit<Worker, 'id' | 'advances' | 'payments' | 'active'>) => {
+    const worker: Worker = { ...w, id: generateId(), advances: [], payments: [], active: true };
     persist({ ...data, workers: [...data.workers, worker] });
     return worker;
   }, [data, persist]);
