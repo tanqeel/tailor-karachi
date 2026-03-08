@@ -129,13 +129,37 @@ export default function Orders() {
                   {balance > 0 && <span className="text-destructive font-semibold">Due: Rs {balance.toLocaleString()}</span>}
                 </div>
               </div>
-              <div className="px-4 pb-3 flex flex-wrap gap-2">
-                {order.suits.map((suit, i) => (
-                  <div key={suit.id} className="flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
-                    <StatusBadge status={suit.status} onClick={() => cycleSuitStatus(order.id, suit.id)} />
+              <div className="px-4 pb-3 space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {order.suits.map((suit, i) => (
+                    <div key={suit.id} className="flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
+                      <StatusBadge status={suit.status} onClick={() => cycleSuitStatus(order.id, suit.id)} />
+                    </div>
+                  ))}
+                </div>
+                {customer?.phone && (
+                  <div className="flex gap-2">
+                    {(dlStatus === 'overdue' || dlStatus === 'urgent' || dlStatus === 'approaching') && (
+                      <a href={getWhatsAppLink(customer.phone, getDeadlineReminderMessage(customer.name, order.deadline, lang))} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
+                        <MessageCircle size={12} /> {lang === 'ur' ? 'یاد دہانی' : 'Reminder'}
+                      </a>
+                    )}
+                    {order.suits.every(s => s.status === 'ready' || s.status === 'delivered') && !order.deliveredAt && (
+                      <a href={getWhatsAppLink(customer.phone, getReadyForPickupMessage(customer.name, lang))} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-semibold active:scale-95 transition-transform">
+                        <MessageCircle size={12} /> {lang === 'ur' ? 'تیار پیغام' : 'Ready Msg'}
+                      </a>
+                    )}
+                    {balance > 0 && (
+                      <a href={getWhatsAppLink(customer.phone, getPaymentReminderMessage(customer.name, balance, lang))} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-warning/10 text-warning text-[10px] font-semibold active:scale-95 transition-transform">
+                        <MessageCircle size={12} /> {lang === 'ur' ? 'بقایا' : 'Payment'}
+                      </a>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             </div>
           );
