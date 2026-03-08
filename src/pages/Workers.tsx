@@ -7,6 +7,7 @@ import type { Worker, WorkerAdvance, WorkerPayment } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
 import { Plus, X, Wallet, ChevronRight, History, MessageCircle, Banknote } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 
 export default function Workers() {
   const { t, isUrdu } = useLang();

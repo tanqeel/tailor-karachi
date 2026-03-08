@@ -8,6 +8,7 @@ import { printReceipt, getReceiptWhatsAppLink } from '@/lib/printReceipt';
 import SearchBar from '@/components/SearchBar';
 import StatusBadge from '@/components/StatusBadge';
 import { Plus, X, MessageCircle, Printer, Clock, Filter } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 
 const ALL_STATUSES: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
 

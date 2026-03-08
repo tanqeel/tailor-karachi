@@ -5,6 +5,7 @@ import { emptyMeasurements, generateId } from '@/lib/store';
 import type { Customer, Measurements, MeasurementRecord } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import { Plus, Phone, ChevronRight, X, User, MapPin, History } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 
 const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean) => [
   { section: t('measurements.kameez'), items: [
