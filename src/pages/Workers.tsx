@@ -58,13 +58,14 @@ export default function Workers() {
     w.name.toLowerCase().includes(search.toLowerCase()) || w.phone.includes(search)
   );
 
-  const getWorkerHistory = (worker: Worker) => {
+  const getWorkerActiveSuits = (worker: Worker) => {
     return data.orders.flatMap(o => {
       const customer = data.customers.find(c => c.id === o.customerId);
       return o.suits
         .filter(s => s.workerId === worker.id)
         .map(s => ({
           orderId: o.id,
+          suitId: s.id,
           customerName: customer?.name || 'Unknown',
           customerId: customer?.customerId || '',
           type: s.type,
@@ -72,10 +73,26 @@ export default function Workers() {
           designWork: s.designWork,
           deadline: o.deadline,
           createdAt: o.createdAt,
+          location: s.location,
           rate: s.type === 'kameez' ? worker.rateKameez : s.type === 'shalwar' ? worker.rateShalwar : worker.rateSuit,
           designRate: s.designWork ? worker.rateDesign : 0,
         }));
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
+
+  const getWorkerHistory = (worker: Worker) => getWorkerActiveSuits(worker);
+
+  const changeSuitStatus = (orderId: string, suitId: string, newStatus: SuitStatus) => {
+    const order = data.orders.find(o => o.id === orderId);
+    if (!order) return;
+    const now = new Date().toISOString();
+    const newSuits = order.suits.map(s => {
+      if (s.id !== suitId) return s;
+      const history: StatusChange[] = [...(s.statusHistory || []), { status: newStatus, timestamp: now }];
+      return { ...s, status: newStatus, statusHistory: history };
+    });
+    const allDelivered = newSuits.every(s => s.status === 'delivered');
+    updateOrder(orderId, { suits: newSuits, deliveredAt: allDelivered ? now : undefined });
   };
 
   const openNew = () => {
