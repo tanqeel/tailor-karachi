@@ -5,6 +5,75 @@ import type { Customer, Measurements as MeasurementsType } from '@/lib/store';
 import { generateId } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import { Ruler, X, User, ChevronRight, History } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
+
+interface MeasurementField {
+  key: string;
+  label: string;
+  options?: { value: string; labelEn: string; labelUr: string }[];
+}
+
+const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean): { section: string, items: MeasurementField[] }[] => [
+  {
+    section: t('measurements.kameez'), items: [
+      { key: 'kameezLength', label: t('measurements.length') },
+      { key: 'chest', label: t('measurements.chest') },
+      { key: 'shoulder', label: t('measurements.shoulder') },
+      { key: 'sleeve', label: t('measurements.sleeve') },
+      { key: 'kamar', label: t('measurements.kamar') },
+      { key: 'daman', label: t('measurements.daman') },
+      { key: 'teera', label: t('measurements.teera') },
+      { key: 'collar', label: t('measurements.collar') },
+      {
+        key: 'kameezType', label: isUrdu ? 'کالر اسٹائل' : 'Collar Style', options: [
+          { value: 'collar', labelEn: 'Collar', labelUr: 'کالر' },
+          { value: 'ban', labelEn: 'Ban', labelUr: 'بین' },
+          { value: 'half-ban', labelEn: 'Half Ban', labelUr: 'ہاف بین' },
+          { value: 'magzi', labelEn: 'Magzi', labelUr: 'مغزی' },
+        ]
+      },
+      { key: 'cuff', label: t('measurements.cuff') },
+      {
+        key: 'cuffType', label: isUrdu ? 'کف اسٹائل' : 'Cuff Style', options: [
+          { value: 'normal', labelEn: 'Normal', labelUr: 'نارمل' },
+          { value: 'cut', labelEn: 'Cut', labelUr: 'کٹ' },
+          { value: 'double', labelEn: 'Double', labelUr: 'ڈبل' },
+        ]
+      },
+      { key: 'frontPocket', label: t('measurements.frontPocket') },
+      {
+        key: 'pocketType', label: isUrdu ? 'جیب اسٹائل' : 'Pocket Style', options: [
+          { value: 'front', labelEn: 'Front', labelUr: 'سامنے' },
+          { value: 'side', labelEn: 'Side', labelUr: 'سائیڈ' },
+          { value: 'both', labelEn: 'Both', labelUr: 'دونوں' },
+          { value: 'none', labelEn: 'None', labelUr: 'کوئی نہیں' },
+        ]
+      },
+      {
+        key: 'buttonType', label: isUrdu ? 'بٹن' : 'Buttons', options: [
+          { value: 'fancy', labelEn: 'Fancy', labelUr: 'فینسی' },
+          { value: 'covered', labelEn: 'Covered', labelUr: 'کورڈ' },
+          { value: 'simple', labelEn: 'Simple', labelUr: 'سادہ' },
+        ]
+      },
+    ]
+  },
+  {
+    section: t('measurements.shalwar'), items: [
+      { key: 'shalwarLength', label: t('measurements.length') },
+      { key: 'pancha', label: t('measurements.pancha') },
+      { key: 'waist', label: t('measurements.waist') },
+      { key: 'hip', label: t('measurements.hip') },
+      {
+        key: 'bottomType', label: isUrdu ? 'شلوار اسٹائل' : 'Shalwar Style', options: [
+          { value: 'simple', labelEn: 'Simple', labelUr: 'سادہ' },
+          { value: 'design', labelEn: 'Design', labelUr: 'ڈیزائن' },
+          { value: 'heavy', labelEn: 'Heavy', labelUr: 'بھاری' },
+        ]
+      },
+    ]
+  },
+];
 
 export default function Measurements() {
   const { t, isUrdu } = useLang();
@@ -31,7 +100,7 @@ export default function Measurements() {
     const oldM = editing.measurements;
     let history = editing.measurementHistory || [];
     const hasOld = oldM.chest || oldM.kameezLength || oldM.shoulder || oldM.waist;
-    const changed = Object.keys(measurements).some(k => (measurements as any)[k] !== (oldM as any)[k]);
+    const changed = Object.keys(measurements).some(k => (measurements as unknown as Record<string, string>)[k] !== (oldM as unknown as Record<string, string>)[k]);
     if (hasOld && changed) {
       history = [...history, {
         id: generateId(),
@@ -44,24 +113,7 @@ export default function Measurements() {
     setEditing(null);
   };
 
-  const fields = [
-    { section: t('measurements.kameez'), items: [
-      { key: 'kameezLength', label: t('measurements.length') },
-      { key: 'chest', label: t('measurements.chest') },
-      { key: 'shoulder', label: t('measurements.shoulder') },
-      { key: 'sleeve', label: t('measurements.sleeve') },
-      { key: 'collar', label: t('measurements.collar') },
-      { key: 'teera', label: isUrdu ? 'تیرا' : 'Teera' },
-      { key: 'kamar', label: isUrdu ? 'کمر' : 'Kamar' },
-      { key: 'daman', label: t('measurements.daman') },
-    ]},
-    { section: t('measurements.shalwar'), items: [
-      { key: 'shalwarLength', label: t('measurements.length') },
-      { key: 'pancha', label: isUrdu ? 'پونچا' : 'Pooncha' },
-      { key: 'waist', label: t('measurements.waist') },
-      { key: 'hip', label: t('measurements.hip') },
-    ]},
-  ];
+  const fields = getMeasurementFields(t, isUrdu);
 
   const hasMeasurements = (c: Customer) => {
     const m = c.measurements;
@@ -122,32 +174,62 @@ export default function Measurements() {
             </div>
             <div className="p-4 space-y-4">
               {fields.map(section => (
-                <div key={section.section}>
-                  <h4 className="font-semibold text-sm mb-2 text-primary">{section.section}</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {section.items.map(item => (
-                      <div key={item.key}>
-                        <label className="text-xs text-muted-foreground">{item.label}</label>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={(measurements as any)[item.key] || ''}
-                          onChange={e => setMeasurements({ ...measurements, [item.key]: e.target.value })}
-                          className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target"
-                          placeholder="—"
-                        />
-                      </div>
-                    ))}
+                <div key={section.section} className="bg-card/50 rounded-xl p-3 border border-border">
+                  <h4 className="font-semibold text-sm mb-3 text-primary">{section.section}</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {section.items.map(item => {
+                      const val = String((measurements as unknown as Record<string, string>)[item.key] || '');
+
+                      if (item.options) {
+                        return (
+                          <div key={item.key} className="col-span-2 space-y-1.5 mt-1 border-t border-border/50 pt-3">
+                            <label className="text-xs font-semibold text-muted-foreground">{item.label}</label>
+                            <div className="flex flex-wrap gap-2">
+                              {item.options.map(opt => {
+                                const isSelected = val === opt.value;
+                                return (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setMeasurements({ ...measurements, [item.key]: isSelected ? '' : opt.value })}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors touch-target ${isSelected
+                                      ? 'bg-primary text-primary-foreground shadow-md'
+                                      : 'bg-muted text-muted-foreground border border-border hover:bg-muted/80'
+                                      }`}
+                                  >
+                                    {isUrdu ? opt.labelUr : opt.labelEn}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={item.key}>
+                          <label className="text-xs text-muted-foreground">{item.label}</label>
+                          <VoiceInput
+                            type="text"
+                            inputMode="decimal"
+                            value={val}
+                            onChange={v => setMeasurements({ ...measurements, [item.key]: v })}
+                            className="!px-3 !py-3 !rounded-xl !bg-background !border-border text-sm !focus:outline-none !focus:ring-2 !focus:ring-primary/30"
+                            placeholder="—"
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
-              <div>
-                <label className="text-xs text-muted-foreground">{isUrdu ? 'نوٹس' : 'Notes'}</label>
-                <textarea
+              <div className="bg-card/50 rounded-xl p-3 border border-border">
+                <label className="text-xs font-semibold mb-2 block">{isUrdu ? 'مزید تفصیلی نوٹس' : 'Detailed Notes'}</label>
+                <VoiceInput
                   value={measurements.notes}
-                  onChange={e => setMeasurements({ ...measurements, notes: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  rows={2}
+                  onChange={v => setMeasurements({ ...measurements, notes: v })}
+                  className="!rounded-xl"
+                  multiline rows={3} append
                 />
               </div>
               <button onClick={handleSave} className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-semibold text-base touch-target active:scale-95 transition-transform">
@@ -188,7 +270,7 @@ export default function Measurements() {
   );
 }
 
-function MeasurementGrid({ m, isUrdu }: { m: any; isUrdu: boolean }) {
+function MeasurementGrid({ m, isUrdu }: { m: MeasurementsType; isUrdu: boolean }) {
   const items = [
     { label: isUrdu ? 'لمبائی' : 'Length', value: m.kameezLength },
     { label: isUrdu ? 'سینہ' : 'Chest', value: m.chest },

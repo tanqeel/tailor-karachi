@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { AppData, Customer, Order, Worker, generateId, generateCustomerId, emptyMeasurements } from '@/lib/store';
-import { loadDataFromDB, saveDataToDB } from '@/lib/db';
+import { loadDataFromDB, saveDataToDB, performDailyBackup } from '@/lib/db';
 
 interface DataContextType {
   data: AppData;
@@ -24,7 +24,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDataFromDB().then(d => { _setData(d); setLoading(false); });
+    loadDataFromDB().then(d => {
+      _setData(d);
+      setLoading(false);
+      performDailyBackup(d);
+    });
   }, []);
 
   const persist = useCallback((d: AppData) => { _setData(d); saveDataToDB(d); }, []);

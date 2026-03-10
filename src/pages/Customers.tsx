@@ -9,25 +9,72 @@ import { Plus, Phone, ChevronRight, X, User, MapPin, History } from 'lucide-reac
 import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 
-const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean) => [
-  { section: t('measurements.kameez'), items: [
-    { key: 'kameezLength', label: t('measurements.length') },
-    { key: 'chest', label: t('measurements.chest') },
-    { key: 'shoulder', label: t('measurements.shoulder') },
-    { key: 'sleeve', label: t('measurements.sleeve') },
-    { key: 'collar', label: t('measurements.collar') },
-    { key: 'teera', label: t('measurements.teera') },
-    { key: 'kamar', label: t('measurements.kamar') },
-    { key: 'daman', label: t('measurements.daman') },
-    { key: 'cuff', label: t('measurements.cuff') },
-    { key: 'frontPocket', label: t('measurements.frontPocket') },
-  ]},
-  { section: t('measurements.shalwar'), items: [
-    { key: 'shalwarLength', label: t('measurements.length') },
-    { key: 'pancha', label: t('measurements.pancha') },
-    { key: 'waist', label: t('measurements.waist') },
-    { key: 'hip', label: t('measurements.hip') },
-  ]},
+interface MeasurementField {
+  key: string;
+  label: string;
+  options?: { value: string; labelEn: string; labelUr: string }[];
+}
+
+const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean): { section: string, items: MeasurementField[] }[] => [
+  {
+    section: t('measurements.kameez'), items: [
+      { key: 'kameezLength', label: t('measurements.length') },
+      { key: 'chest', label: t('measurements.chest') },
+      { key: 'shoulder', label: t('measurements.shoulder') },
+      { key: 'sleeve', label: t('measurements.sleeve') },
+      { key: 'kamar', label: t('measurements.kamar') },
+      { key: 'daman', label: t('measurements.daman') },
+      { key: 'teera', label: t('measurements.teera') },
+      { key: 'collar', label: t('measurements.collar') },
+      {
+        key: 'kameezType', label: isUrdu ? 'کالر اسٹائل' : 'Collar Style', options: [
+          { value: 'collar', labelEn: 'Collar', labelUr: 'کالر' },
+          { value: 'ban', labelEn: 'Ban', labelUr: 'بین' },
+          { value: 'half-ban', labelEn: 'Half Ban', labelUr: 'ہاف بین' },
+          { value: 'magzi', labelEn: 'Magzi', labelUr: 'مغزی' },
+        ]
+      },
+      { key: 'cuff', label: t('measurements.cuff') },
+      {
+        key: 'cuffType', label: isUrdu ? 'کف اسٹائل' : 'Cuff Style', options: [
+          { value: 'normal', labelEn: 'Normal', labelUr: 'نارمل' },
+          { value: 'cut', labelEn: 'Cut', labelUr: 'کٹ' },
+          { value: 'double', labelEn: 'Double', labelUr: 'ڈبل' },
+        ]
+      },
+      { key: 'frontPocket', label: t('measurements.frontPocket') },
+      {
+        key: 'pocketType', label: isUrdu ? 'جیب اسٹائل' : 'Pocket Style', options: [
+          { value: 'front', labelEn: 'Front', labelUr: 'سامنے' },
+          { value: 'side', labelEn: 'Side', labelUr: 'سائیڈ' },
+          { value: 'both', labelEn: 'Both', labelUr: 'دونوں' },
+          { value: 'none', labelEn: 'None', labelUr: 'کوئی نہیں' },
+        ]
+      },
+      {
+        key: 'buttonType', label: isUrdu ? 'بٹن' : 'Buttons', options: [
+          { value: 'fancy', labelEn: 'Fancy', labelUr: 'فینسی' },
+          { value: 'covered', labelEn: 'Covered', labelUr: 'کورڈ' },
+          { value: 'simple', labelEn: 'Simple', labelUr: 'سادہ' },
+        ]
+      },
+    ]
+  },
+  {
+    section: t('measurements.shalwar'), items: [
+      { key: 'shalwarLength', label: t('measurements.length') },
+      { key: 'pancha', label: t('measurements.pancha') },
+      { key: 'waist', label: t('measurements.waist') },
+      { key: 'hip', label: t('measurements.hip') },
+      {
+        key: 'bottomType', label: isUrdu ? 'شلوار اسٹائل' : 'Shalwar Style', options: [
+          { value: 'simple', labelEn: 'Simple', labelUr: 'سادہ' },
+          { value: 'design', labelEn: 'Design', labelUr: 'ڈیزائن' },
+          { value: 'heavy', labelEn: 'Heavy', labelUr: 'بھاری' },
+        ]
+      },
+    ]
+  },
 ];
 
 function MeasurementForm({ measurements, onChange, t, isUrdu }: { measurements: Measurements; onChange: (m: Measurements) => void; t: (k: string) => string; isUrdu: boolean }) {
@@ -35,28 +82,58 @@ function MeasurementForm({ measurements, onChange, t, isUrdu }: { measurements: 
   return (
     <div className="space-y-4">
       {fields.map(section => (
-        <div key={section.section}>
-          <h4 className="font-semibold text-sm mb-2 text-primary">{section.section}</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {section.items.map(item => (
-              <div key={item.key}>
-                <label className="text-xs text-muted-foreground">{item.label}</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={(measurements as any)[item.key] || ''}
-                  onChange={e => onChange({ ...measurements, [item.key]: e.target.value })}
-                  className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target"
-                  placeholder='—'
-                />
-              </div>
-            ))}
+        <div key={section.section} className="bg-card/50 rounded-xl p-3 border border-border">
+          <h4 className="font-semibold text-sm mb-3 text-primary">{section.section}</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {section.items.map(item => {
+              const val = String((measurements as unknown as Record<string, string>)[item.key] || '');
+
+              if (item.options) {
+                return (
+                  <div key={item.key} className="col-span-2 space-y-1.5 mt-1 border-t border-border/50 pt-3">
+                    <label className="text-xs font-semibold text-muted-foreground">{item.label}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {item.options.map(opt => {
+                        const isSelected = val === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => onChange({ ...measurements, [item.key]: isSelected ? '' : opt.value })}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors touch-target ${isSelected
+                              ? 'bg-primary text-primary-foreground shadow-md'
+                              : 'bg-muted text-muted-foreground border border-border hover:bg-muted/80'
+                              }`}
+                          >
+                            {isUrdu ? opt.labelUr : opt.labelEn}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={item.key}>
+                  <label className="text-xs text-muted-foreground">{item.label}</label>
+                  <VoiceInput
+                    type="text"
+                    inputMode="decimal"
+                    value={val}
+                    onChange={v => onChange({ ...measurements, [item.key]: v })}
+                    className="!px-3 !py-3 !rounded-xl !bg-background !border-border text-sm !focus:outline-none !focus:ring-2 !focus:ring-primary/30"
+                    placeholder="—"
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
-      <div>
-        <label className="text-xs text-muted-foreground">{isUrdu ? 'نوٹس' : 'Notes'}</label>
-        <VoiceInput value={measurements.notes} onChange={v => onChange({ ...measurements, notes: v })} multiline rows={2} append />
+      <div className="bg-card/50 rounded-xl p-3 border border-border">
+        <label className="text-xs font-semibold mb-2 block">{isUrdu ? 'مزید تفصیلی نوٹس' : 'Detailed Notes'}</label>
+        <VoiceInput value={measurements.notes} onChange={v => onChange({ ...measurements, notes: v })} multiline rows={2} append className="!rounded-xl" />
       </div>
     </div>
   );
@@ -110,7 +187,7 @@ export default function Customers() {
     if (editing) {
       const oldM = editing.measurements;
       const newM = measurements;
-      const changed = Object.keys(newM).some(k => (newM as any)[k] !== (oldM as any)[k]);
+      const changed = Object.keys(newM).some(k => (newM as unknown as Record<string, string>)[k] !== (oldM as unknown as Record<string, string>)[k]);
       let history = editing.measurementHistory || [];
       if (changed && (oldM.chest || oldM.kameezLength)) {
         history = [...history, {
@@ -139,7 +216,7 @@ export default function Customers() {
 
       <div className="space-y-2">
         {filtered.map(customer => (
-          <div key={customer.id} className="bg-card rounded-xl border border-border overflow-hidden">
+          <div key={customer.id} className="premium-card rounded-xl overflow-hidden">
             <div onClick={() => openEdit(customer)} className="p-4 flex items-center gap-3 active:scale-[0.98] transition-transform cursor-pointer">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <User size={18} className="text-primary" />
@@ -178,9 +255,9 @@ export default function Customers() {
 
       {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowForm(false)}>
-          <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowForm(false)}>
+          <div className="premium-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 glass-panel sticky top-0 z-10">
               <h2 className="font-bold text-lg">{editing ? t('common.edit') : t('common.add')} {t('nav.customers')}</h2>
               <button onClick={() => setShowForm(false)} className="p-2 touch-target"><X size={20} /></button>
             </div>
@@ -218,9 +295,9 @@ export default function Customers() {
 
       {/* Measurement History Modal */}
       {showHistory && (
-        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowHistory(null)}>
-          <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowHistory(null)}>
+          <div className="premium-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 glass-panel sticky top-0 z-10">
               <div>
                 <h2 className="font-bold text-lg">{showHistory.name}</h2>
                 <p className="text-xs text-muted-foreground">{isUrdu ? 'ناپ کی تاریخ' : 'Measurement History'}</p>
@@ -273,20 +350,25 @@ function MeasurementDisplay({ m, isUrdu }: { m: Measurements; isUrdu: boolean })
     { label: isUrdu ? 'دامن' : 'Daman', value: m.daman },
     { label: isUrdu ? 'کف' : 'Cuff', value: m.cuff },
     { label: isUrdu ? 'جیب' : 'Pocket', value: m.frontPocket },
+    { label: isUrdu ? 'ٹیگ (قمیض)' : 'Kameez Type', value: m.kameezType },
+    { label: isUrdu ? 'اسٹائل (کف)' : 'Cuff Style', value: m.cuffType },
+    { label: isUrdu ? 'اسٹائل (جیب)' : 'Pocket Style', value: m.pocketType },
+    { label: isUrdu ? 'بٹن' : 'Buttons', value: m.buttonType },
     { label: isUrdu ? 'شلوار' : 'Shalwar', value: m.shalwarLength },
     { label: isUrdu ? 'پونچا' : 'Pooncha', value: m.pancha },
     { label: isUrdu ? 'کمر' : 'Waist', value: m.waist },
     { label: isUrdu ? 'ہپ' : 'Hip', value: m.hip },
+    { label: isUrdu ? 'اسٹائل (شلوار)' : 'Bottom Style', value: m.bottomType },
   ].filter(i => i.value);
 
   if (items.length === 0) return <p className="text-xs text-muted-foreground">{isUrdu ? 'خالی' : 'Empty'}</p>;
 
   return (
-    <div className="grid grid-cols-3 gap-1">
+    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
       {items.map(i => (
-        <div key={i.label} className="text-xs">
-          <span className="text-muted-foreground">{i.label}: </span>
-          <span className="font-semibold">{i.value}</span>
+        <div key={i.label} className="text-[11px] flex justify-between border-b border-border/50 pb-0.5">
+          <span className="text-muted-foreground">{i.label}</span>
+          <span className="font-semibold text-right">{i.value}</span>
         </div>
       ))}
     </div>

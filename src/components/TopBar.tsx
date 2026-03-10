@@ -1,4 +1,4 @@
-import { useLang } from '@/contexts/LanguageContext';
+﻿import { useLang } from '@/contexts/LanguageContext';
 import { Languages, Download, Upload, Mic, MicOff } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
@@ -96,3 +96,6 @@ export default function TopBar() {
     </header>
   );
 }
+
+
+

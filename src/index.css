@@ -132,6 +132,14 @@
   .touch-target {
     @apply min-h-[48px] min-w-[48px];
   }
+  .premium-card {
+    @apply bg-card/70 backdrop-blur-xl border border-white/10 dark:border-white/5 
+           shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] 
+           hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] transition-all duration-300;
+  }
+  .glass-panel {
+    @apply bg-background/80 backdrop-blur-2xl border-b border-border/40;
+  }
   .status-received { @apply bg-muted text-muted-foreground; }
   .status-cutting { @apply bg-info text-info-foreground; }
   .status-stitching { @apply bg-primary text-primary-foreground; }

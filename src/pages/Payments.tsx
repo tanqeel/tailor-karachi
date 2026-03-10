@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { generateId } from '@/lib/store';
-import type { PaymentRecord } from '@/lib/store';
+import type { Order, PaymentRecord } from '@/lib/store';
 import SearchBar from '@/components/SearchBar';
 import { DollarSign, Check, X, Clock, CreditCard, Banknote, History } from 'lucide-react';
 
@@ -67,7 +67,7 @@ export default function Payments() {
 
     updateOrder(payModal, {
       advancePaid: Math.min(newAdvance, order.totalAmount),
-      paymentStatus: status as any,
+      paymentStatus: status as Order['paymentStatus'],
       paymentHistory: history,
     });
     setPayModal(null);
@@ -84,7 +84,7 @@ export default function Payments() {
     const newHistory = (order.paymentHistory || []).filter(p => p.id !== recordId);
     const newAdvance = Math.max(0, order.advancePaid - record.amount);
     const status = newAdvance >= order.totalAmount ? 'paid' : newAdvance > 0 ? 'partial' : 'pending';
-    updateOrder(orderId, { advancePaid: newAdvance, paymentStatus: status as any, paymentHistory: newHistory });
+    updateOrder(orderId, { advancePaid: newAdvance, paymentStatus: status as Order['paymentStatus'], paymentHistory: newHistory });
   };
 
   const methodLabel = (m: string) => {
@@ -149,14 +149,13 @@ export default function Payments() {
                     <p className="font-semibold text-sm">{customer?.name}</p>
                     <p className="text-xs text-muted-foreground font-mono">{customer?.customerId}</p>
                   </div>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                    order.paymentStatus === 'pending' ? 'bg-destructive/10 text-destructive' :
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${order.paymentStatus === 'pending' ? 'bg-destructive/10 text-destructive' :
                     order.paymentStatus === 'advance' ? 'bg-warning/10 text-warning' :
-                    'bg-accent/10 text-accent-foreground'
-                  }`}>
+                      'bg-accent/10 text-accent-foreground'
+                    }`}>
                     {order.paymentStatus === 'pending' ? (isUrdu ? 'بقایا' : 'Pending') :
-                     order.paymentStatus === 'advance' ? (isUrdu ? 'پیشگی' : 'Advance') :
-                     (isUrdu ? 'جزوی' : 'Partial')}
+                      order.paymentStatus === 'advance' ? (isUrdu ? 'پیشگی' : 'Advance') :
+                        (isUrdu ? 'جزوی' : 'Partial')}
                   </span>
                 </div>
                 <div className="space-y-1">

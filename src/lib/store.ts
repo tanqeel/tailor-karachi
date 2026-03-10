@@ -1,9 +1,8 @@
-// Offline-first localStorage data store for Karachi Tailors
+﻿// Offline-first localStorage data store for Karachi Tailors
 
 export type SuitStatus = 'received' | 'cutting' | 'stitching' | 'finishing' | 'packed' | 'ready' | 'delivered';
 
 export interface Measurements {
-  // Kameez
   kameezLength: string;
   chest: string;
   shoulder: string;
@@ -14,13 +13,17 @@ export interface Measurements {
   daman: string;
   cuff: string;
   frontPocket: string;
-  // Shalwar
   shalwarLength: string;
   waist: string;
   hip: string;
   pancha: string;
-  // Notes
   notes: string;
+  // Custom structural options
+  kameezType?: string;
+  cuffType?: string;
+  pocketType?: string;
+  bottomType?: string;
+  buttonType?: string;
 }
 
 export interface MeasurementRecord {
@@ -32,7 +35,7 @@ export interface MeasurementRecord {
 
 export interface Customer {
   id: string;
-  customerId: string; // e.g. KT-001
+  customerId: string;
   name: string;
   phone: string;
   address: string;
@@ -56,6 +59,7 @@ export interface OrderSuit {
   id: string;
   status: SuitStatus;
   workerId?: string;
+  workers?: Partial<Record<SuitStatus, string>>;
   type: 'kameez' | 'shalwar' | 'full_suit';
   designWork: boolean;
   notes: string;
@@ -121,48 +125,57 @@ export interface AppData {
 }
 
 const STORAGE_KEY = 'karachi-tailors-data';
+const STATUS_FLOW: SuitStatus[] = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
 
 export const emptyMeasurements: Measurements = {
   kameezLength: '', chest: '', shoulder: '', sleeve: '', collar: '', teera: '', kamar: '', daman: '', cuff: '', frontPocket: '',
   shalwarLength: '', waist: '', hip: '', pancha: '', notes: '',
+  kameezType: '', cuffType: '', pocketType: '', bottomType: '', buttonType: '',
 };
+
+function normalizeSuit(s: Partial<OrderSuit> & { workerId?: string }, createdAt: string): OrderSuit {
+  const currentWorker = s.workerId || s.workers?.[s.status || 'received'];
+  return {
+    id: s.id || generateId(),
+    status: s.status || 'received',
+    type: s.type || 'full_suit',
+    designWork: !!s.designWork,
+    notes: s.notes || '',
+    ...s,
+    workerId: currentWorker,
+    workers: s.workers || (currentWorker ? { [s.status || 'received']: currentWorker } : {}),
+    statusHistory: s.statusHistory || [{ status: s.status || 'received', timestamp: createdAt }],
+  } as OrderSuit;
+}
 
 export function loadData(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      // Migrate old customers without address/measurementHistory
-      data.customers = data.customers.map((c: any) => ({
+      data.customers = (data.customers || []).map((c: Customer) => ({
         ...c,
         address: c.address || '',
         measurementHistory: c.measurementHistory || [],
         measurements: { ...emptyMeasurements, ...c.measurements },
       }));
-      // Migrate old suits without statusHistory
-      data.orders = data.orders.map((o: any) => ({
+      data.orders = (data.orders || []).map((o: Order) => ({
         ...o,
-        suits: o.suits.map((s: any) => ({
-          ...s,
-          statusHistory: s.statusHistory || [{ status: s.status, timestamp: o.createdAt }],
-        })),
+        suits: (o.suits || []).map((s: OrderSuit) => normalizeSuit(s, o.createdAt)),
+        notes: o.notes || '',
+        paymentHistory: o.paymentHistory || [],
       }));
-      // Migrate old workers without role/experience
-      data.workers = (data.workers || []).map((w: any) => ({
+      data.workers = (data.workers || []).map((w: Worker) => ({
         ...w,
         role: w.role || '',
         experience: w.experience || '',
         payments: w.payments || [],
       }));
-      // Migrate old orders without notes/paymentHistory
-      data.orders = data.orders.map((o: any) => ({
-        ...o,
-        notes: o.notes || '',
-        paymentHistory: o.paymentHistory || [],
-      }));
       return data;
     }
-  } catch {}
+  } catch (e) {
+    console.warn('LocalStorage data corrupted', e);
+  }
   return { customers: [], orders: [], workers: [] };
 }
 
@@ -199,25 +212,61 @@ export function getDeadlineStatus(deadline: string): 'overdue' | 'urgent' | 'app
   return 'ok';
 }
 
+function hasReachedStatus(suit: OrderSuit, status: SuitStatus): boolean {
+  const currentIndex = STATUS_FLOW.indexOf(suit.status);
+  const statusIndex = STATUS_FLOW.indexOf(status);
+  if (currentIndex >= statusIndex) return true;
+  return (suit.statusHistory || []).some((entry) => entry.status === status);
+}
+
+export function getAssignedWorkerIds(suit: OrderSuit): string[] {
+  const ids = new Set<string>();
+  if (suit.workerId) ids.add(suit.workerId);
+  Object.values(suit.workers || {}).forEach((id) => {
+    if (id) ids.add(id);
+  });
+  return Array.from(ids);
+}
+
+export function getWorkerForSuitStatus(suit: OrderSuit, status: SuitStatus = suit.status): string | undefined {
+  return suit.workers?.[status] || (status === suit.status ? suit.workerId : undefined) || suit.workers?.ready || suit.workers?.packed;
+}
+
+function getSuitRate(worker: Worker, suit: OrderSuit): number {
+  let total = suit.type === 'kameez'
+    ? worker.rateKameez
+    : suit.type === 'shalwar'
+      ? worker.rateShalwar
+      : worker.rateSuit;
+  if (suit.designWork) total += worker.rateDesign;
+  return total;
+}
+
 export function getWorkerEarnings(worker: Worker, orders: Order[], period: 'daily' | 'weekly' | 'monthly'): number {
   const now = new Date();
-  let startDate: Date;
-  if (period === 'daily') {
-    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  } else if (period === 'weekly') {
-    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  } else {
-    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  }
+  const startDate = period === 'daily'
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    : period === 'weekly'
+      ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
   let total = 0;
   for (const order of orders) {
     if (new Date(order.createdAt) < startDate) continue;
     for (const suit of order.suits) {
-      if (suit.workerId !== worker.id) continue;
-      if (suit.type === 'kameez') total += worker.rateKameez;
-      else if (suit.type === 'shalwar') total += worker.rateShalwar;
-      else total += worker.rateSuit;
-      if (suit.designWork) total += worker.rateDesign;
+      const matchedStatuses = Object.entries(suit.workers || {})
+        .filter(([, workerId]) => workerId === worker.id)
+        .map(([status]) => status as SuitStatus)
+        .filter((status) => hasReachedStatus(suit, status));
+
+      if (matchedStatuses.length > 0) {
+        total += matchedStatuses.length * getSuitRate(worker, suit);
+        continue;
+      }
+
+      if (suit.workerId === worker.id) {
+        total += getSuitRate(worker, suit);
+      }
     }
   }
   return total;
@@ -228,7 +277,7 @@ export function getWorkerAdvancesTotal(worker: Worker, period: 'weekly' | 'all')
   const now = new Date();
   const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   return worker.advances
-    .filter(a => new Date(a.date) >= startDate)
+    .filter((a) => new Date(a.date) >= startDate)
     .reduce((sum, a) => sum + a.amount, 0);
 }
 
@@ -237,7 +286,7 @@ export function getWorkerPaymentsTotal(worker: Worker, period: 'weekly' | 'all')
   const now = new Date();
   const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   return (worker.payments || [])
-    .filter(p => new Date(p.date) >= startDate)
+    .filter((p) => new Date(p.date) >= startDate)
     .reduce((sum, p) => sum + p.amount, 0);
 }
 
@@ -245,11 +294,23 @@ export function getWorkerSuitsCount(worker: Worker, orders: Order[], period: 'we
   const now = new Date();
   const startDate = period === 'all' ? new Date(0) : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   let count = 0;
+
   for (const order of orders) {
     if (new Date(order.createdAt) < startDate) continue;
     for (const suit of order.suits) {
-      if (suit.workerId === worker.id) count++;
+      const completedAssignments = Object.entries(suit.workers || {})
+        .filter(([, workerId]) => workerId === worker.id)
+        .map(([status]) => status as SuitStatus)
+        .filter((status) => hasReachedStatus(suit, status));
+
+      if (completedAssignments.length > 0) {
+        count += completedAssignments.length;
+        continue;
+      }
+
+      if (suit.workerId === worker.id) count += 1;
     }
   }
+
   return count;
 }

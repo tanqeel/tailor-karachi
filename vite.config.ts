@@ -1,10 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { fileURLToPath } from "url";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export default defineConfig(({ mode }) => ({
+  base: '/tailor-karachi/',
   server: {
     host: "::",
     port: 8080,
@@ -50,8 +55,8 @@ export default defineConfig(({ mode }) => ({
         background_color: "#f5f7f5",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
-        scope: "/",
+        start_url: "/tailor-karachi/",
+        scope: "/tailor-karachi/",
         categories: ["business", "productivity"],
         icons: [
           { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

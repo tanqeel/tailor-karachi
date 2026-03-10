@@ -95,6 +95,7 @@ export default function Orders() {
     setSuits([{
       id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '',
       statusHistory: [{ status: 'received', timestamp: new Date().toISOString() }],
+      workers: {},
     }]);
     setShowForm(true);
   };
@@ -114,6 +115,7 @@ export default function Orders() {
     setSuits([...suits, {
       id: generateId(), status: 'received', type: 'full_suit', designWork: false, notes: '',
       statusHistory: [{ status: 'received', timestamp: new Date().toISOString() }],
+      workers: {},
     }]);
   };
 
@@ -132,9 +134,9 @@ export default function Orders() {
     const paymentStatus = advance >= total ? 'paid' : advance > 0 ? 'advance' : 'pending';
 
     if (editingOrder) {
-      updateOrder(editingOrder.id, { customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes });
+      updateOrder(editingOrder.id, { customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as Order['paymentStatus'], suits, notes });
     } else {
-      addOrder({ customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as any, suits, notes, paymentHistory: advance > 0 ? [{ id: Date.now().toString(36), amount: advance, date: new Date().toISOString(), method: 'cash' as const, note: isUrdu ? 'پیشگی' : 'Advance' }] : [] });
+      addOrder({ customerId, deadline, totalAmount: total, advancePaid: advance, paymentStatus: paymentStatus as Order['paymentStatus'], suits, notes, paymentHistory: advance > 0 ? [{ id: Date.now().toString(36), amount: advance, date: new Date().toISOString(), method: 'cash' as const, note: isUrdu ? 'پیشگی' : 'Advance' }] : [] });
     }
     setShowForm(false);
   };
@@ -147,7 +149,7 @@ export default function Orders() {
       if (s.id !== suitId) return s;
       const newStatus = nextStatus(s.status);
       const history: StatusChange[] = [...(s.statusHistory || []), { status: newStatus, timestamp: now }];
-      return { ...s, status: newStatus, statusHistory: history };
+      return { ...s, status: newStatus, workerId: s.workers?.[newStatus], statusHistory: history };
     });
     const allDelivered = newSuits.every(s => s.status === 'delivered');
     updateOrder(orderId, { suits: newSuits, deliveredAt: allDelivered ? now : undefined });
@@ -201,7 +203,7 @@ export default function Orders() {
           const daysLeft = Math.ceil((new Date(order.deadline).getTime() - Date.now()) / 86400000);
 
           return (
-            <div key={order.id} className="bg-card rounded-xl border border-border overflow-hidden">
+            <div key={order.id} className="premium-card rounded-xl border border-white/5 overflow-hidden">
               <div className="p-4" onClick={() => openEdit(order)}>
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -209,12 +211,11 @@ export default function Orders() {
                     <p className="text-xs text-muted-foreground font-mono">{customer?.customerId}</p>
                   </div>
                   <div className="text-right space-y-1">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                      dlStatus === 'overdue' ? 'bg-destructive text-destructive-foreground' :
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${dlStatus === 'overdue' ? 'bg-destructive text-destructive-foreground' :
                       dlStatus === 'urgent' ? 'bg-warning text-warning-foreground' :
-                      dlStatus === 'approaching' ? 'bg-accent text-accent-foreground' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
+                        dlStatus === 'approaching' ? 'bg-accent text-accent-foreground' :
+                          'bg-muted text-muted-foreground'
+                      }`}>
                       {new Date(order.deadline).toLocaleDateString()}
                     </span>
                     <p className={`text-[10px] font-semibold ${daysLeft < 0 ? 'text-destructive' : daysLeft <= 1 ? 'text-warning' : 'text-muted-foreground'}`}>
@@ -231,7 +232,7 @@ export default function Orders() {
               </div>
               <div className="px-4 pb-3 space-y-2">
                 <div className="flex flex-wrap gap-2">
-                    {order.suits.map((suit, i) => (
+                  {order.suits.map((suit, i) => (
                     <div key={suit.id} className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-muted-foreground">#{i + 1}</span>
@@ -297,7 +298,7 @@ export default function Orders() {
       {/* Timeline Modal */}
       {showTimeline && (
         <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowTimeline(null)}>
-          <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="premium-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
               <div>
                 <h2 className="font-bold text-lg">{isUrdu ? 'آرڈر ٹائم لائن' : 'Order Timeline'}</h2>
@@ -308,14 +309,24 @@ export default function Orders() {
             <div className="p-4 space-y-4">
               {showTimeline.suits.map((suit, i) => {
                 const suitTypes: Record<string, string> = { full_suit: isUrdu ? 'فل سوٹ' : 'Full Suit', kameez: isUrdu ? 'قمیض' : 'Kameez', shalwar: isUrdu ? 'شلوار' : 'Shalwar' };
-                const worker = suit.workerId ? data.workers.find(w => w.id === suit.workerId) : null;
+                const assignedWorkers = suit.workers ? Object.entries(suit.workers).map(([status, id]) => ({
+                  status, worker: data.workers.find(w => w.id === id)
+                })).filter(aw => aw.worker) : [];
                 return (
                   <div key={suit.id} className="bg-background rounded-xl p-4 border border-border">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-sm">{isUrdu ? 'سوٹ' : 'Suit'} #{i + 1} — {suitTypes[suit.type]}</h3>
                       <StatusBadge status={suit.status} />
                     </div>
-                    {worker && <p className="text-[10px] text-muted-foreground mb-2">{isUrdu ? 'کاریگر' : 'Worker'}: {worker.name}</p>}
+                    {assignedWorkers.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {assignedWorkers.map(aw => (
+                          <span key={aw.status} className="text-[9px] bg-muted px-2 py-0.5 rounded text-muted-foreground">
+                            {t(`status.${aw.status}`)}: <span className="font-semibold">{aw.worker!.name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     {suit.location && (suit.location.box || suit.location.line || suit.location.khanna) && (
                       <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2 bg-muted/50 rounded-lg px-2 py-1">
                         <MapPin size={10} />
@@ -342,7 +353,7 @@ export default function Orders() {
       {/* Order Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center" onClick={() => setShowForm(false)}>
-          <div className="bg-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="premium-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card z-10">
               <h2 className="font-bold text-lg">{editingOrder ? t('common.edit') : t('order.new')}</h2>
               <button onClick={() => setShowForm(false)} className="p-2 touch-target"><X size={20} /></button>
@@ -384,23 +395,48 @@ export default function Orders() {
                           <button onClick={() => removeSuit(idx)} className="text-destructive text-xs">{isUrdu ? 'ہٹائیں' : 'Remove'}</button>
                         )}
                       </div>
-                      <select value={suit.type} onChange={e => updateSuit(idx, { type: e.target.value as any })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
+                      <select value={suit.type} onChange={e => updateSuit(idx, { type: e.target.value as OrderSuit['type'] })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
                         <option value="full_suit">{isUrdu ? 'فل سوٹ' : 'Full Suit'}</option>
                         <option value="kameez">{isUrdu ? 'صرف قمیض' : 'Kameez Only'}</option>
                         <option value="shalwar">{isUrdu ? 'صرف شلوار' : 'Shalwar Only'}</option>
                       </select>
-                      <select value={suit.workerId || ''} onChange={e => updateSuit(idx, { workerId: e.target.value || undefined })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
-                        <option value="">{isUrdu ? 'کاریگر منتخب کریں...' : 'Assign Worker...'}</option>
-                        {data.workers.filter(w => w.active).map(w => (
-                          <option key={w.id} value={w.id}>{w.name}</option>
-                        ))}
-                      </select>
+                      <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-muted-foreground">{isUrdu ? 'مرحلہ وار کاریگر' : 'Stage-wise Worker Assignment'}</span>
+                          <span className="text-[10px] text-primary font-semibold">{t(`status.${suit.status}`)}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['cutting', 'stitching', 'finishing', 'packed', 'ready'] as SuitStatus[]).map(stage => (
+                            <div key={stage} className="space-y-1">
+                              <label className="text-[10px] text-muted-foreground">{t(`status.${stage}`)}</label>
+                              <select
+                                value={suit.workers?.[stage] || ''}
+                                onChange={e => {
+                                  const newWorkers = { ...(suit.workers || {}) };
+                                  if (e.target.value) newWorkers[stage] = e.target.value;
+                                  else delete newWorkers[stage];
+                                  updateSuit(idx, {
+                                    workers: Object.keys(newWorkers).length ? newWorkers : undefined,
+                                    workerId: stage === suit.status ? (e.target.value || undefined) : suit.workerId,
+                                  });
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-xs"
+                              >
+                                <option value="">{isUrdu ? 'کوئی نہیں' : 'Unassigned'}</option>
+                                {data.workers.filter(w => w.active).map(w => (
+                                  <option key={w.id} value={w.id}>{w.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                       <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" checked={suit.designWork} onChange={e => updateSuit(idx, { designWork: e.target.checked })} className="rounded" />
                         {isUrdu ? 'ڈیزائن ورک' : 'Design Work'}
                       </label>
                       {editingOrder && (
-                        <select value={suit.status} onChange={e => updateSuit(idx, { status: e.target.value as SuitStatus })} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
+                        <select value={suit.status} onChange={e => { const nextStatus = e.target.value as SuitStatus; updateSuit(idx, { status: nextStatus, workerId: suit.workers?.[nextStatus] }); }} className="w-full px-3 py-2 rounded-lg bg-card border border-border text-sm">
                           {ALL_STATUSES.map(s => (
                             <option key={s} value={s}>{t(`status.${s}`)}</option>
                           ))}
@@ -460,3 +496,7 @@ export default function Orders() {
     </div>
   );
 }
+
+
+
+

@@ -7,13 +7,46 @@ interface UseVoiceOptions {
   continuous?: boolean;
 }
 
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: {
+    length: number;
+    [key: number]: {
+      isFinal: boolean;
+      [key: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognition extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: unknown) => void;
+  onend: () => void;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  SpeechRecognition?: new () => SpeechRecognition;
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+}
+
 export function useVoice({ onResult, onCommand, continuous = false }: UseVoiceOptions = {}) {
   const { isUrdu } = useLang();
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  const isSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+  const isSupported = typeof window !== 'undefined' &&
+    (!!(window as WindowWithSpeechRecognition).SpeechRecognition ||
+      !!(window as WindowWithSpeechRecognition).webkitSpeechRecognition);
 
   const stop = useCallback(() => {
     if (recognitionRef.current) {
@@ -27,7 +60,10 @@ export function useVoice({ onResult, onCommand, continuous = false }: UseVoiceOp
     if (!isSupported) return;
     stop();
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const Win = window as WindowWithSpeechRecognition;
+    const SpeechRecognition = Win.SpeechRecognition || Win.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
 
@@ -37,7 +73,7 @@ export function useVoice({ onResult, onCommand, continuous = false }: UseVoiceOp
     recognition.continuous = continuous;
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = (e: any) => {
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
       let finalTranscript = '';
       let interimTranscript = '';
 

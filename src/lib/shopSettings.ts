@@ -58,7 +58,9 @@ export function loadShopSettings(): ShopSettings {
   try {
     const raw = localStorage.getItem(SHOP_KEY);
     if (raw) return { ...defaultSettings, ...JSON.parse(raw) };
-  } catch {}
+  } catch (e) {
+    // Ignore storage errors 
+  }
   return defaultSettings;
 }
 
@@ -70,7 +72,9 @@ export function loadGalleryImages(): GalleryImage[] {
   try {
     const raw = localStorage.getItem(GALLERY_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch (e) {
+    // Ignore storage errors
+  }
   return [];
 }
 
@@ -82,7 +86,9 @@ export function loadReviews(): Review[] {
   try {
     const raw = localStorage.getItem(REVIEWS_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch (e) {
+    // Ignore storage errors
+  }
   return [
     { id: '1', name: 'Ahmed Khan', rating: 5, text: 'Best tailor in Karachi! Perfect stitching every time.', date: '2025-12-15' },
     { id: '2', name: 'Bilal Shah', rating: 5, text: 'Great design work on my sherwani for the wedding.', date: '2026-01-20' },

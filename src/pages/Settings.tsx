@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
@@ -8,21 +8,10 @@ import type { AppData } from '@/lib/store';
 import type { BackupInfo } from '@/lib/autoBackup';
 import type { ShopSettings, PriceItem, GalleryImage, Review } from '@/lib/shopSettings';
 import VoiceInput from '@/components/VoiceInput';
-import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon, Store, Image, Plus, X, Star, MessageSquare, DollarSign, Shield, Clock, HardDrive, FileDown, FileUp, CalendarCheck } from 'lucide-react';
+import { Settings2, Download, Upload, Languages, Database, Trash2, RotateCcw, Sun, Moon, Store, Image, Plus, X, Star, MessageSquare, DollarSign, Shield, Clock, HardDrive, FileDown, FileUp, CalendarCheck, MonitorCog, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
-
-function useTheme() {
-  const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem('kt-theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    localStorage.setItem('kt-theme', dark ? 'dark' : 'light');
-  }, [dark]);
-  return { dark, toggle: () => setDark(p => !p) };
-}
+import { useTheme } from 'next-themes';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Settings() {
   const { lang, toggleLang, isUrdu } = useLang();
@@ -37,6 +26,9 @@ export default function Settings() {
   const [autoBackup, setAutoBackup] = useState(isAutoBackupEnabled);
   const lastBackup = getLastBackupTime();
   const theme = useTheme();
+  const { logout } = useAuth();
+  const themeValue = theme.theme || 'system';
+  const resolvedDark = theme.resolvedTheme === 'dark';
 
   // Shop settings
   const [shop, setShop] = useState<ShopSettings>(() => loadShopSettings());
@@ -98,7 +90,7 @@ export default function Settings() {
     const next = !autoBackup;
     setAutoBackup(next);
     setAutoBackupEnabled(next);
-    toast.success(next 
+    toast.success(next
       ? (isUrdu ? 'خودکار بیک اپ فعال' : 'Auto backup enabled')
       : (isUrdu ? 'خودکار بیک اپ غیر فعال' : 'Auto backup disabled')
     );
@@ -489,17 +481,33 @@ export default function Settings() {
         </div>
       </button>
 
-      {/* Dark Mode */}
-      <button onClick={theme.toggle} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
-        <div className="p-3 rounded-xl bg-muted">{theme.dark ? <Moon size={22} className="text-info" /> : <Sun size={22} className="text-warning" />}</div>
-        <div className="flex-1 text-left">
-          <p className="font-semibold text-sm">{isUrdu ? 'ڈارک / لائٹ موڈ' : 'Dark / Light Mode'}</p>
-          <p className="text-xs text-muted-foreground">{theme.dark ? (isUrdu ? 'ڈارک موڈ فعال' : 'Dark mode active') : (isUrdu ? 'لائٹ موڈ فعال' : 'Light mode active')}</p>
+      {/* Theme */}
+      <div className="w-full bg-card rounded-xl p-4 border border-border space-y-3">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-muted">{resolvedDark ? <Moon size={22} className="text-info" /> : <Sun size={22} className="text-warning" />}</div>
+          <div className="flex-1 text-left">
+            <p className="font-semibold text-sm">{isUrdu ? 'تھیم موڈ' : 'Theme Mode'}</p>
+            <p className="text-xs text-muted-foreground">
+              {themeValue === 'system'
+                ? (isUrdu ? 'سسٹم کے مطابق' : 'Follow system preference')
+                : resolvedDark
+                  ? (isUrdu ? 'ڈارک موڈ فعال' : 'Dark mode active')
+                  : (isUrdu ? 'لائٹ موڈ فعال' : 'Light mode active')}
+            </p>
+          </div>
         </div>
-        <div className={`w-12 h-7 rounded-full relative transition-colors ${theme.dark ? 'bg-primary' : 'bg-muted'}`}>
-          <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-card shadow transition-transform ${theme.dark ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        <div className="grid grid-cols-3 gap-2">
+          <button onClick={() => theme.setTheme('light')} className={`rounded-xl px-3 py-3 text-xs font-semibold transition ${themeValue === 'light' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+            {isUrdu ? 'لائٹ' : 'Light'}
+          </button>
+          <button onClick={() => theme.setTheme('dark')} className={`rounded-xl px-3 py-3 text-xs font-semibold transition ${themeValue === 'dark' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+            {isUrdu ? 'ڈارک' : 'Dark'}
+          </button>
+          <button onClick={() => theme.setTheme('system')} className={`rounded-xl px-3 py-3 text-xs font-semibold transition ${themeValue === 'system' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+            <span className="inline-flex items-center gap-1"><MonitorCog size={14} /> {isUrdu ? 'سسٹم' : 'System'}</span>
+          </button>
         </div>
-      </button>
+      </div>
 
       {/* Language */}
       <button onClick={toggleLang} className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-4 active:scale-[0.98] transition-transform">
@@ -518,6 +526,15 @@ export default function Settings() {
           <p className="text-xs text-muted-foreground">
             {backups.length} {isUrdu ? 'بیک اپ' : 'backups'} · {autoBackup ? (isUrdu ? 'خودکار فعال' : 'Auto ON') : (isUrdu ? 'خودکار غیر فعال' : 'Auto OFF')}
           </p>
+        </div>
+      </button>
+
+      {/* Logout */}
+      <button onClick={logout} className="w-full bg-card rounded-xl p-4 border border-warning/30 flex items-center gap-4 active:scale-[0.98] transition-transform">
+        <div className="p-3 rounded-xl bg-warning/10"><LogOut size={22} className="text-warning" /></div>
+        <div className="flex-1 text-left">
+          <p className="font-semibold text-sm">{isUrdu ? 'لاگ آؤٹ' : 'Log Out'}</p>
+          <p className="text-xs text-muted-foreground">{isUrdu ? 'ایپ کو دوبارہ لاک کریں' : 'Lock the app again'}</p>
         </div>
       </button>
 
@@ -556,3 +573,8 @@ export default function Settings() {
     </div>
   );
 }
+
+
+
+
+

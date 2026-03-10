@@ -51,7 +51,7 @@ export default function VoiceInput({
       ) : (
         <input
           type={type || 'text'}
-          inputMode={inputMode as any}
+          inputMode={inputMode as React.InputHTMLAttributes<HTMLInputElement>['inputMode']}
           value={listening && transcript ? transcript : value}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
@@ -64,11 +64,10 @@ export default function VoiceInput({
         <button
           type="button"
           onClick={toggle}
-          className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${
-            listening
+          className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all ${listening
               ? 'bg-destructive text-destructive-foreground animate-pulse-soft'
               : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
-          }`}
+            }`}
           title={listening ? (isUrdu ? 'بند کریں' : 'Stop') : (isUrdu ? '🎤 بولیں' : '🎤 Speak')}
         >
           {listening ? <MicOff size={16} /> : <Mic size={16} />}

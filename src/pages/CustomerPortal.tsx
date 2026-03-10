@@ -4,7 +4,7 @@ import { useData } from '@/contexts/DataContext';
 import { emptyMeasurements, generateId } from '@/lib/store';
 import { cleanInput } from '@/lib/validation';
 import { loadShopSettings, loadGalleryImages, loadReviews } from '@/lib/shopSettings';
-import type { Measurements } from '@/lib/store';
+import type { Measurements, OrderSuit, Order, Customer } from '@/lib/store';
 import StatusBadge from '@/components/StatusBadge';
 import VoiceInput from '@/components/VoiceInput';
 import { MapPin, Phone, MessageCircle, Scissors, Search, Image, ShoppingBag, Ruler, Clock, Star, ChevronLeft, ChevronRight, Send, CheckCircle2 } from 'lucide-react';
@@ -38,6 +38,10 @@ const shalwarFields = [
 ];
 
 type Section = 'home' | 'track' | 'order' | 'measurements';
+type TrackResult = {
+  customer: Customer;
+  orders: Order[];
+} | { error: boolean } | null;
 
 export default function CustomerPortal() {
   const { t, isUrdu } = useLang();
@@ -58,7 +62,7 @@ export default function CustomerPortal() {
   const [section, setSection] = useState<Section>('home');
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [trackId, setTrackId] = useState('');
-  const [trackResult, setTrackResult] = useState<any>(null);
+  const [trackResult, setTrackResult] = useState<{ customer: Customer; orders: Order[] } | { error: boolean } | null>(null);
   const [orderName, setOrderName] = useState('');
   const [orderPhone, setOrderPhone] = useState('');
   const [orderType, setOrderType] = useState('full_suit');
@@ -73,9 +77,12 @@ export default function CustomerPortal() {
   const whatsAppBase = `https://wa.me/${shop.phone.replace('+', '').replace(/\s/g, '')}`;
 
   const handleTrack = () => {
-    const customer = data.customers.find(c =>
-      c.customerId.toLowerCase() === trackId.trim().toLowerCase() || c.phone === trackId.trim()
-    );
+    const normalizedTrackId = trackId.trim().toLowerCase();
+    const customer = data.customers.find((c: Customer) => {
+      const matchId = c.customerId.toLowerCase() === normalizedTrackId;
+      const matchPhone = c.phone === trackId.trim();
+      return matchId || matchPhone;
+    });
     if (customer) {
       setTrackResult({ customer, orders: data.orders.filter(o => o.customerId === customer.id) });
     } else {
@@ -97,7 +104,7 @@ export default function CustomerPortal() {
       addOrder({
         customerId: customer.id, deadline: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
         totalAmount: 0, advancePaid: 0, paymentStatus: 'pending', notes: `[Online] ${safeNotes}`.trim(), paymentHistory: [],
-        suits: [{ id: generateId(), status: 'received', type: orderType as any, designWork: orderDesign, notes: safeNotes, statusHistory: [{ status: 'received' as const, timestamp: new Date().toISOString() }] }],
+        suits: [{ id: generateId(), status: 'received', type: orderType as 'kameez' | 'shalwar' | 'full_suit', designWork: orderDesign, notes: safeNotes, statusHistory: [{ status: 'received' as const, timestamp: new Date().toISOString() }] }],
       });
     }
     setOrderSubmitted(true);
@@ -135,7 +142,7 @@ export default function CustomerPortal() {
           <VoiceInput value={trackId} onChange={setTrackId} placeholder="KT-001 or 0300..." />
           <button onClick={handleTrack} className="px-5 py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-sm touch-target active:scale-95 shrink-0">{isUrdu ? 'تلاش' : 'Track'}</button>
         </div>
-        {trackResult && !trackResult.error && (
+        {trackResult && !('error' in trackResult) && (
           <div className="mt-4 space-y-3">
             <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
               <p className="font-bold">{trackResult.customer.name}</p>
@@ -143,10 +150,10 @@ export default function CustomerPortal() {
             </div>
             {trackResult.orders.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">{isUrdu ? 'کوئی آرڈر نہیں' : 'No orders found'}</p>
-            ) : trackResult.orders.map((order: any) => {
+            ) : trackResult.orders.map((order: Order) => {
               const isDelivered = !!order.deliveredAt;
               const balance = order.totalAmount - order.advancePaid;
-               return (
+              return (
                 <div key={order.id} className={`rounded-xl p-4 border space-y-3 ${isDelivered ? 'bg-success/5 border-success/20' : 'bg-card border-border'}`}>
                   <div className="flex items-center justify-between">
                     <div>
@@ -154,7 +161,7 @@ export default function CustomerPortal() {
                     </div>
                     {isDelivered && <span className="text-xs font-bold px-2 py-1 rounded-full bg-success text-success-foreground">✅ {isUrdu ? 'حوالے' : 'Delivered'}</span>}
                   </div>
-                  {order.suits.map((suit: any, i: number) => {
+                  {order.suits.map((suit: OrderSuit, i: number) => {
                     const types: Record<string, string> = { full_suit: isUrdu ? 'فل سوٹ' : 'Full Suit', kameez: isUrdu ? 'قمیض' : 'Kameez', shalwar: isUrdu ? 'شلوار' : 'Shalwar' };
                     const stages = ['received', 'cutting', 'stitching', 'finishing', 'packed', 'ready', 'delivered'];
                     const pct = Math.round(((stages.indexOf(suit.status) + 1) / stages.length) * 100);
@@ -247,7 +254,7 @@ export default function CustomerPortal() {
             <div className="grid grid-cols-2 gap-2">
               {kameezFields.map(f => (
                 <div key={f.key}><label className="text-[10px] text-muted-foreground">{isUrdu ? f.ur : f.en}</label>
-                  <input type="text" inputMode="decimal" value={(measurements as any)[f.key] || ''} onChange={e => setMeasurements({ ...measurements, [f.key]: e.target.value })} className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" placeholder="—" />
+                  <input type="text" inputMode="decimal" value={(measurements as unknown as Record<string, string>)[f.key] || ''} onChange={e => setMeasurements({ ...measurements, [f.key]: e.target.value })} className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" placeholder="—" />
                 </div>
               ))}
             </div>
@@ -257,7 +264,7 @@ export default function CustomerPortal() {
             <div className="grid grid-cols-2 gap-2">
               {shalwarFields.map(f => (
                 <div key={f.key}><label className="text-[10px] text-muted-foreground">{isUrdu ? f.ur : f.en}</label>
-                  <input type="text" inputMode="decimal" value={(measurements as any)[f.key] || ''} onChange={e => setMeasurements({ ...measurements, [f.key]: e.target.value })} className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" placeholder="—" />
+                  <input type="text" inputMode="decimal" value={(measurements as unknown as Record<string, string>)[f.key] || ''} onChange={e => setMeasurements({ ...measurements, [f.key]: e.target.value })} className="w-full px-3 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target" placeholder="—" />
                 </div>
               ))}
             </div>

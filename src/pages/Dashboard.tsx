@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
-import { getDeadlineStatus, getWorkerEarnings, getWorkerSuitsCount } from '@/lib/store';
+import { getDeadlineStatus, getWorkerEarnings, getWorkerSuitsCount, type Order, type OrderSuit } from '@/lib/store';
 import { useNavigate } from 'react-router-dom';
 import { Users, ClipboardList, Wrench, Ruler, DollarSign, Package, BarChart3, Settings2, Globe, AlertTriangle, Clock, CalendarClock, Timer, Banknote } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -75,9 +75,9 @@ export default function Dashboard() {
 
   const getCustomer = (cid: string) => data.customers.find(c => c.id === cid);
 
-  const OrderRow = ({ order, badge, badgeClass }: { order: any; badge: string; badgeClass: string }) => {
+  const OrderRow = ({ order, badge, badgeClass }: { order: Order; badge: string; badgeClass: string }) => {
     const customer = getCustomer(order.customerId);
-    const suitsDone = order.suits.filter((s: any) => s.status === 'ready' || s.status === 'packed' || s.status === 'delivered').length;
+    const suitsDone = order.suits.filter((s: OrderSuit) => s.status === 'ready' || s.status === 'packed' || s.status === 'delivered').length;
     const progress = order.suits.length > 0 ? Math.round((suitsDone / order.suits.length) * 100) : 0;
     return (
       <div onClick={() => navigate('/orders')} className="flex items-center justify-between bg-card rounded-lg p-3 cursor-pointer active:scale-[0.98] transition-transform border border-border">

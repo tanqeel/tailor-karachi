@@ -71,14 +71,16 @@ export function validateBackupData(data: unknown): { valid: boolean; data?: AppD
   if (!Array.isArray(appData.workers)) return { valid: false, error: 'Missing or invalid workers array' };
 
   // Validate each customer has required fields
-  for (const c of appData.customers as any[]) {
+  const customers = appData.customers as Array<{ id?: string; name?: string }>;
+  for (const c of customers) {
     if (!c.id || typeof c.id !== 'string') return { valid: false, error: 'Invalid customer: missing id' };
     if (!c.name || typeof c.name !== 'string') return { valid: false, error: `Invalid customer ${c.id}: missing name` };
     if (c.name.length > 200) return { valid: false, error: `Customer name too long: ${c.name.slice(0, 20)}...` };
   }
 
   // Validate each order
-  for (const o of appData.orders as any[]) {
+  const orders = appData.orders as Array<{ id?: string; customerId?: string; suits?: any[]; totalAmount?: number }>;
+  for (const o of orders) {
     if (!o.id || typeof o.id !== 'string') return { valid: false, error: 'Invalid order: missing id' };
     if (!o.customerId || typeof o.customerId !== 'string') return { valid: false, error: `Invalid order ${o.id}: missing customerId` };
     if (!Array.isArray(o.suits)) return { valid: false, error: `Invalid order ${o.id}: missing suits array` };
@@ -86,7 +88,8 @@ export function validateBackupData(data: unknown): { valid: boolean; data?: AppD
   }
 
   // Validate workers
-  for (const w of appData.workers as any[]) {
+  const workers = appData.workers as Array<{ id?: string; name?: string }>;
+  for (const w of workers) {
     if (!w.id || typeof w.id !== 'string') return { valid: false, error: 'Invalid worker: missing id' };
     if (!w.name || typeof w.name !== 'string') return { valid: false, error: `Invalid worker ${w.id}: missing name` };
   }

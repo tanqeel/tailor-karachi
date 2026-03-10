@@ -1,39 +1,42 @@
-// Auto daily backup system for localStorage
+// Auto daily backup system for IndexedDB
 
 import type { AppData } from './store';
 import { sendBrowserNotification } from './notifications';
+import { get, set, keys, del } from 'idb-keyval';
 
 const BACKUP_PREFIX = 'kt-backup-';
 const LAST_BACKUP_KEY = 'kt-last-backup';
-const MAX_BACKUPS = 7; // Keep last 7 days
 const BACKUP_ENABLED_KEY = 'kt-auto-backup-enabled';
+const MAX_BACKUPS = 30; // Keep last 30 days in IndexedDB
 
-export function isAutoBackupEnabled(): boolean {
-  const val = localStorage.getItem(BACKUP_ENABLED_KEY);
-  return val === null ? true : val === 'true'; // enabled by default
+export async function isAutoBackupEnabled(): Promise<boolean> {
+  const val = await get(BACKUP_ENABLED_KEY);
+  return val === undefined ? true : val; // enabled by default
 }
 
-export function setAutoBackupEnabled(enabled: boolean): void {
-  localStorage.setItem(BACKUP_ENABLED_KEY, String(enabled));
+export async function setAutoBackupEnabled(enabled: boolean): Promise<void> {
+  await set(BACKUP_ENABLED_KEY, enabled);
 }
 
-export function getLastBackupTime(): string | null {
-  return localStorage.getItem(LAST_BACKUP_KEY);
+export async function getLastBackupTime(): Promise<string | null> {
+  const val = await get<string>(LAST_BACKUP_KEY);
+  return val || null;
 }
 
-export function shouldAutoBackup(): boolean {
-  if (!isAutoBackupEnabled()) return false;
-  const last = getLastBackupTime();
+export async function shouldAutoBackup(): Promise<boolean> {
+  const enabled = await isAutoBackupEnabled();
+  if (!enabled) return false;
+  const last = await getLastBackupTime();
   if (!last) return true;
   const lastDate = new Date(last).toISOString().slice(0, 10);
   const today = new Date().toISOString().slice(0, 10);
   return lastDate !== today;
 }
 
-export function performAutoBackup(data: AppData): string {
+export async function performAutoBackup(data: AppData): Promise<string> {
   const timestamp = new Date().toISOString();
   const key = BACKUP_PREFIX + timestamp.slice(0, 10);
-  
+
   const backupMeta = {
     data,
     timestamp,
@@ -42,25 +45,25 @@ export function performAutoBackup(data: AppData): string {
       orders: data.orders.length,
       workers: data.workers.length,
       totalSuits: data.orders.reduce((sum, o) => sum + o.suits.length, 0),
-      totalMeasurements: data.customers.filter(c => 
+      totalMeasurements: data.customers.filter(c =>
         Object.values(c.measurements).some(v => v && v.trim() !== '')
       ).length,
       totalPayments: data.orders.reduce((sum, o) => sum + (o.paymentHistory?.length || 0), 0),
     },
   };
 
-  localStorage.setItem(key, JSON.stringify(backupMeta));
-  localStorage.setItem(LAST_BACKUP_KEY, timestamp);
-  
-  cleanupOldBackups();
-  
+  await set(key, backupMeta);
+  await set(LAST_BACKUP_KEY, timestamp);
+
+  await cleanupOldBackups();
+
   return timestamp;
 }
 
-export function performManualBackup(data: AppData): string {
+export async function performManualBackup(data: AppData): Promise<string> {
   const timestamp = new Date().toISOString();
   const key = BACKUP_PREFIX + 'manual-' + timestamp.replace(/[:.]/g, '-');
-  
+
   const backupMeta = {
     data,
     timestamp,
@@ -77,20 +80,20 @@ export function performManualBackup(data: AppData): string {
     },
   };
 
-  localStorage.setItem(key, JSON.stringify(backupMeta));
-  localStorage.setItem(LAST_BACKUP_KEY, timestamp);
-  
+  await set(key, backupMeta);
+  await set(LAST_BACKUP_KEY, timestamp);
+
   return timestamp;
 }
 
-function cleanupOldBackups() {
-  const backupKeys: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key?.startsWith(BACKUP_PREFIX) && !key.includes('manual')) backupKeys.push(key);
-  }
+async function cleanupOldBackups(): Promise<void> {
+  const allKeys = await keys();
+  const backupKeys = allKeys.filter(k => typeof k === 'string' && k.startsWith(BACKUP_PREFIX) && !k.includes('manual')) as string[];
   backupKeys.sort().reverse();
-  backupKeys.slice(MAX_BACKUPS).forEach(k => localStorage.removeItem(k));
+  const toDelete = backupKeys.slice(MAX_BACKUPS);
+  for (const k of toDelete) {
+    await del(k);
+  }
 }
 
 export interface BackupInfo {
@@ -108,15 +111,14 @@ export interface BackupInfo {
   };
 }
 
-export function listBackups(): BackupInfo[] {
+export async function listBackups(): Promise<BackupInfo[]> {
   const backups: BackupInfo[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key?.startsWith(BACKUP_PREFIX)) {
+  const allKeys = await keys();
+  for (const key of allKeys) {
+    if (typeof key === 'string' && key.startsWith(BACKUP_PREFIX)) {
       try {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const parsed = JSON.parse(raw);
+        const parsed = await get<{ timestamp: string; manual?: boolean; stats?: BackupInfo['stats'] }>(key);
+        if (parsed && parsed.timestamp) {
           backups.push({
             date: key.replace(BACKUP_PREFIX, '').replace('manual-', ''),
             timestamp: parsed.timestamp,
@@ -125,23 +127,25 @@ export function listBackups(): BackupInfo[] {
             stats: parsed.stats,
           });
         }
-      } catch {}
+      } catch (e) {
+        // Skip corrupted entries
+      }
     }
   }
   return backups.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 }
 
-export function deleteBackup(key: string): void {
-  localStorage.removeItem(key);
+export async function deleteBackup(key: string): Promise<void> {
+  await del(key);
 }
 
-export function restoreBackup(key: string): AppData | null {
+export async function restoreBackup(key: string): Promise<AppData | null> {
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed.data as AppData;
-  } catch {
+    const parsed = await get<{ data: AppData }>(key);
+    if (!parsed) return null;
+    return parsed.data;
+  } catch (e) {
+    console.error('Failed to restore backup from key', key, e);
     return null;
   }
 }
@@ -149,7 +153,7 @@ export function restoreBackup(key: string): AppData | null {
 export function downloadBackupAsFile(data: AppData): void {
   const backup = {
     appName: 'Karachi Tailors',
-    version: '1.0',
+    version: '2.0',
     exportedAt: new Date().toISOString(),
     data,
     stats: {
@@ -170,7 +174,7 @@ export function downloadBackupAsFile(data: AppData): void {
 
 export function importBackupFromFile(file: File): Promise<AppData | null> {
   return new Promise((resolve) => {
-    if (file.size > 50 * 1024 * 1024) {
+    if (file.size > 200 * 1024 * 1024) {
       resolve(null);
       return;
     }
@@ -178,17 +182,15 @@ export function importBackupFromFile(file: File): Promise<AppData | null> {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result as string);
-        // Support both direct AppData format and wrapped format
         const appData = parsed.data || parsed;
         if (
           appData.customers && Array.isArray(appData.customers) &&
           appData.orders && Array.isArray(appData.orders) &&
           appData.workers && Array.isArray(appData.workers)
         ) {
-          // Basic structure validation per item
-          const validCustomers = appData.customers.every((c: any) => c.id && c.name);
-          const validOrders = appData.orders.every((o: any) => o.id && o.customerId && Array.isArray(o.suits));
-          const validWorkers = appData.workers.every((w: any) => w.id && w.name);
+          const validCustomers = appData.customers.every((c: { id?: string; name?: string }) => c.id && c.name);
+          const validOrders = appData.orders.every((o: { id?: string; customerId?: string; suits?: unknown[] }) => o.id && o.customerId && Array.isArray(o.suits));
+          const validWorkers = appData.workers.every((w: { id?: string; name?: string }) => w.id && w.name);
           if (validCustomers && validOrders && validWorkers) {
             resolve(appData as AppData);
           } else {
@@ -206,9 +208,9 @@ export function importBackupFromFile(file: File): Promise<AppData | null> {
   });
 }
 
-export function runAutoBackupCheck(data: AppData, lang: 'en' | 'ur') {
-  if (shouldAutoBackup() && (data.customers.length > 0 || data.orders.length > 0)) {
-    const timestamp = performAutoBackup(data);
+export async function runAutoBackupCheck(data: AppData, lang: 'en' | 'ur') {
+  if (await shouldAutoBackup() && (data.customers.length > 0 || data.orders.length > 0)) {
+    const timestamp = await performAutoBackup(data);
     sendBrowserNotification(
       lang === 'ur' ? '✅ خودکار بیک اپ مکمل' : '✅ Auto Backup Complete',
       lang === 'ur'

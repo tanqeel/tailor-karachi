@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -17,7 +17,7 @@
     <script>
       // Apply saved theme before render to prevent flash
       const t = localStorage.getItem('kt-theme');
-      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      if (t === 'dark' || ((t === 'system' || !t) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
       }
     </script>
@@ -36,3 +36,4 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
