@@ -152,7 +152,7 @@ export default function HamburgerMenu() {
                             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
                                 {/* Theme */}
                                 <section>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">
                                         {isUrdu ? 'تھیم' : 'Theme'}
                                     </p>
                                     <div className="grid grid-cols-3 gap-2">
@@ -162,7 +162,7 @@ export default function HamburgerMenu() {
                                                 onClick={() => setTheme(opt.value)}
                                                 className={`flex flex-col items-center gap-2 py-3 rounded-xl border-2 transition-colors text-xs font-semibold ${theme === opt.value
                                                     ? 'border-primary bg-primary/10 text-primary'
-                                                    : 'border-border bg-background text-muted-foreground hover:border-primary/40'
+                                                    : 'border-border bg-background text-foreground hover:border-primary/40'
                                                     }`}
                                             >
                                                 <opt.icon size={18} />
@@ -174,7 +174,7 @@ export default function HamburgerMenu() {
 
                                 {/* Custom Accent Color */}
                                 <section>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                                         <Palette size={13} /> {isUrdu ? 'رنگ تھیم' : 'Accent Color'}
                                     </p>
                                     {/* Preset swatches */}
@@ -204,14 +204,14 @@ export default function HamburgerMenu() {
                                                 onChange={e => { setAccent(e.target.value); applyAccentColor(e.target.value); }}
                                                 className="w-0 h-0 opacity-0 absolute"
                                             />
-                                            <span className="text-xs text-muted-foreground font-mono">{accent}</span>
+                                            <span className="text-xs text-foreground font-mono">{accent}</span>
                                         </label>
                                     </div>
                                 </section>
 
                                 {/* Language */}
                                 <section>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                                         <Languages size={13} /> {isUrdu ? 'زبان' : 'Language'}
                                     </p>
                                     <button
@@ -229,7 +229,7 @@ export default function HamburgerMenu() {
 
                                 {/* Data */}
                                 <section>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                                         <Download size={13} /> {isUrdu ? 'ڈیٹا' : 'Data'}
                                     </p>
                                     <div className="space-y-2">
@@ -253,7 +253,7 @@ export default function HamburgerMenu() {
 
                                 {/* Quick Navigation */}
                                 <section>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3">
                                         {isUrdu ? 'ناوی گیشن' : 'Navigate'}
                                     </p>
                                     <div className="space-y-2">
@@ -276,7 +276,7 @@ export default function HamburgerMenu() {
 
                                 {/* Update */}
                                 <section>
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                                         <RefreshCw size={13} /> {isUrdu ? 'اپ ڈیٹ' : 'Update'}
                                     </p>
                                     <button

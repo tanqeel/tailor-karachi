@@ -192,7 +192,7 @@ export default function Settings() {
           </div>
           <div>
             <p className="text-sm font-semibold">{isUrdu ? 'آخری بیک اپ' : 'Last Backup'}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-foreground">
               {lastBackup ? new Date(lastBackup).toLocaleString() : (isUrdu ? 'کوئی بیک اپ نہیں' : 'No backup yet')}
             </p>
           </div>
@@ -218,7 +218,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-warning/10"><Clock size={20} className="text-warning" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'روزانہ خودکار بیک اپ' : 'Daily Auto Backup'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'ہر روز خود بخود بیک اپ بنائے' : 'Automatically backs up every day'}</p>
+          <p className="text-xs text-foreground">{isUrdu ? 'ہر روز خود بخود بیک اپ بنائے' : 'Automatically backs up every day'}</p>
         </div>
         <div className={`w-12 h-7 rounded-full relative transition-colors ${autoBackup ? 'bg-primary' : 'bg-muted'}`}>
           <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-card shadow transition-transform ${autoBackup ? 'translate-x-5' : 'translate-x-0.5'}`} />
@@ -242,7 +242,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-info/10"><FileUp size={20} className="text-info" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'فائل سے بحال کریں' : 'Restore from File'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'JSON بیک اپ فائل سے ڈیٹا بحال کریں' : 'Import JSON backup file'}</p>
+          <p className="text-xs text-foreground">{isUrdu ? 'JSON بیک اپ فائل سے ڈیٹا بحال کریں' : 'Import JSON backup file'}</p>
         </div>
       </button>
       <input ref={restoreFileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
@@ -274,7 +274,7 @@ export default function Settings() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">{new Date(b.timestamp).toLocaleTimeString()}</p>
+                  <p className="text-[10px] text-foreground">{new Date(b.timestamp).toLocaleTimeString()}</p>
                 </div>
                 <div className="flex gap-1.5">
                   <button onClick={() => handleRestore(b.key)} className="px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-[10px] font-semibold active:scale-95 transition-transform flex items-center gap-1">
@@ -287,11 +287,6 @@ export default function Settings() {
               </div>
               {b.stats && (
                 <div className="flex gap-2 flex-wrap text-[9px] text-muted-foreground">
-                  <span>👤 {b.stats.customers} {isUrdu ? 'گاہک' : 'customers'}</span>
-                  <span>📋 {b.stats.orders} {isUrdu ? 'آرڈرز' : 'orders'}</span>
-                  <span>🔧 {b.stats.workers} {isUrdu ? 'کاریگر' : 'workers'}</span>
-                  <span>👔 {b.stats.totalSuits} {isUrdu ? 'سوٹ' : 'suits'}</span>
-                  <span>📐 {b.stats.totalMeasurements} {isUrdu ? 'ناپ' : 'measurements'}</span>
                   <span>💰 {b.stats.totalPayments} {isUrdu ? 'ادائیگی' : 'payments'}</span>
                 </div>
               )}
@@ -312,23 +307,23 @@ export default function Settings() {
       </div>
       <div className="bg-card rounded-xl p-4 border border-border space-y-4">
         <div>
-          <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'دکان کا نام' : 'Shop Name'}</label>
+          <label className="text-xs text-foreground font-medium">{isUrdu ? 'دکان کا نام' : 'Shop Name'}</label>
           <VoiceInput value={shop.name} onChange={v => setShop({ ...shop, name: v })} />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'فون نمبر' : 'Phone Number'}</label>
+          <label className="text-xs text-foreground font-medium">{isUrdu ? 'فون نمبر' : 'Phone Number'}</label>
           <VoiceInput value={shop.phone} onChange={v => setShop({ ...shop, phone: v })} type="tel" placeholder="+923..." />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'پتہ' : 'Address'}</label>
+          <label className="text-xs text-foreground font-medium">{isUrdu ? 'پتہ' : 'Address'}</label>
           <VoiceInput value={shop.address} onChange={v => setShop({ ...shop, address: v })} />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'اوقات کار' : 'Working Hours'}</label>
+          <label className="text-xs text-foreground font-medium">{isUrdu ? 'اوقات کار' : 'Working Hours'}</label>
           <VoiceInput value={shop.hours} onChange={v => setShop({ ...shop, hours: v })} />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground font-medium">{isUrdu ? 'ٹیگ لائن' : 'Tagline'}</label>
+          <label className="text-xs text-foreground font-medium">{isUrdu ? 'ٹیگ لائن' : 'Tagline'}</label>
           <VoiceInput value={shop.tagline} onChange={v => setShop({ ...shop, tagline: v })} />
         </div>
         <button onClick={saveShop} className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold touch-target active:scale-95">
@@ -351,7 +346,7 @@ export default function Settings() {
           <div key={p.id} className="bg-card rounded-xl p-3 border border-border flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">{isUrdu ? p.nameUr : p.nameEn}</p>
-              <p className="text-[10px] text-muted-foreground">{p.price} · {p.duration}</p>
+              <p className="text-[10px] text-foreground">{p.price} · {p.duration}</p>
             </div>
             <button onClick={() => removePrice(p.id)} className="p-2 text-destructive touch-target"><X size={16} /></button>
           </div>
@@ -449,8 +444,8 @@ export default function Settings() {
               <p className="font-semibold text-sm">{r.name}</p>
               <div className="flex">{Array.from({ length: r.rating }).map((_, i) => <Star key={i} size={12} className="text-warning fill-warning" />)}</div>
             </div>
-            <p className="text-sm text-muted-foreground">{r.text}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">{r.date}</p>
+            <p className="text-sm text-foreground">{r.text}</p>
+            <p className="text-[10px] text-foreground mt-1">{r.date}</p>
             <button onClick={() => removeReview(r.id)} className="absolute top-2 right-2 p-1.5 text-destructive touch-target"><X size={14} /></button>
           </div>
         ))}
@@ -471,7 +466,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-primary/10"><Store size={22} className="text-primary" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'دکان کی تفصیلات' : 'Shop Details'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'فون، پتہ، اوقات' : 'Phone, address, hours'}</p>
+          <p className="text-xs text-foreground">{isUrdu ? 'فون، پتہ، اوقات' : 'Phone, address, hours'}</p>
         </div>
       </button>
 
@@ -480,7 +475,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-accent/10"><DollarSign size={22} className="text-accent-foreground" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'قیمتیں' : 'Prices'}</p>
-          <p className="text-xs text-muted-foreground">{shop.prices.length} {isUrdu ? 'آئٹمز' : 'items'}</p>
+          <p className="text-xs text-foreground">{shop.prices.length} {isUrdu ? 'آئٹمز' : 'items'}</p>
         </div>
       </button>
 
@@ -489,7 +484,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-info/10"><Image size={22} className="text-info" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'ڈیزائن گیلری' : 'Design Gallery'}</p>
-          <p className="text-xs text-muted-foreground">{gallery.length} {isUrdu ? 'تصاویر' : 'photos'}</p>
+          <p className="text-xs text-foreground">{gallery.length} {isUrdu ? 'تصاویر' : 'photos'}</p>
         </div>
       </button>
 
@@ -498,7 +493,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-warning/10"><MessageSquare size={22} className="text-warning" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'ریویوز' : 'Customer Reviews'}</p>
-          <p className="text-xs text-muted-foreground">{reviews.length} {isUrdu ? 'ریویوز' : 'reviews'}</p>
+          <p className="text-xs text-foreground">{reviews.length} {isUrdu ? 'ریویوز' : 'reviews'}</p>
         </div>
       </button>
 
@@ -508,7 +503,7 @@ export default function Settings() {
           <div className="p-3 rounded-xl bg-muted">{resolvedDark ? <Moon size={22} className="text-info" /> : <Sun size={22} className="text-warning" />}</div>
           <div className="flex-1 text-left">
             <p className="font-semibold text-sm">{isUrdu ? 'تھیم موڈ' : 'Theme Mode'}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-foreground">
               {themeValue === 'system'
                 ? (isUrdu ? 'سسٹم کے مطابق' : 'Follow system preference')
                 : resolvedDark
@@ -544,7 +539,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-success/10"><Shield size={22} className="text-success" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'بیک اپ اور بحالی' : 'Backup & Restore'}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground">
             {backups.length} {isUrdu ? 'بیک اپ' : 'backups'} · {autoBackup ? (isUrdu ? 'خودکار فعال' : 'Auto ON') : (isUrdu ? 'خودکار غیر فعال' : 'Auto OFF')}
           </p>
         </div>
@@ -555,7 +550,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-warning/10"><LogOut size={22} className="text-warning" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm">{isUrdu ? 'لاگ آؤٹ' : 'Log Out'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'ایپ کو دوبارہ لاک کریں' : 'Lock the app again'}</p>
+          <p className="text-xs text-foreground">{isUrdu ? 'ایپ کو دوبارہ لاک کریں' : 'Lock the app again'}</p>
         </div>
       </button>
 
@@ -564,7 +559,7 @@ export default function Settings() {
         <div className="p-3 rounded-xl bg-destructive/10"><Trash2 size={22} className="text-destructive" /></div>
         <div className="flex-1 text-left">
           <p className="font-semibold text-sm text-destructive">{isUrdu ? 'تمام ڈیٹا صاف کریں' : 'Clear All Data'}</p>
-          <p className="text-xs text-muted-foreground">{isUrdu ? 'تمام گاہک، آرڈرز اور کاریگر حذف ہوں گے' : 'Delete all customers, orders and workers'}</p>
+          <p className="text-xs text-foreground">{isUrdu ? 'تمام گاہک، آرڈرز اور کاریگر حذف ہوں گے' : 'Delete all customers, orders and workers'}</p>
         </div>
       </button>
 
