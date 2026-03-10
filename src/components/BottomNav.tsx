@@ -68,9 +68,8 @@ export default function BottomNav() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => { navigate(item.path); setShowMore(false); }}
-                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl touch-target transition-colors ${
-                        active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
-                      }`}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl touch-target transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+                        }`}
                     >
                       <item.icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                       <span className="text-[10px] font-medium">{t(item.key)}</span>
@@ -83,23 +82,19 @@ export default function BottomNav() {
         )}
       </AnimatePresence>
 
-      {/* Floating pill nav */}
-      <nav className="fixed bottom-2 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-        <motion.div
-          initial={{ y: 60, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ ...springConfig, delay: 0.1 }}
-          className="pointer-events-auto bg-white dark:bg-card rounded-full shadow-2xl border border-border/50 px-3 py-2 flex items-center gap-1"
-          style={{
-            boxShadow: '0 8px 40px -8px rgba(0,0,0,0.25), 0 4px 12px -4px rgba(0,0,0,0.1)',
-          }}
+      {/* Bottom nav bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto">
+        <div
+          className="bg-card/95 backdrop-blur-md border-t border-border flex items-stretch"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           {allMainItems.map(item => {
             const active = isActive(item.path);
             const isMoreBtn = item.path === '__more__';
+            const label = isMoreBtn ? (isUrdu ? 'مزید' : 'More') : t(item.key);
 
             return (
-              <motion.button
+              <button
                 key={item.path}
                 onClick={() => {
                   if (isMoreBtn) {
@@ -109,48 +104,36 @@ export default function BottomNav() {
                     setShowMore(false);
                   }
                 }}
-                className="relative flex flex-col items-center justify-center w-14 h-12 touch-target"
-                animate={{ y: active ? -10 : 0 }}
-                transition={springConfig}
+                className="flex-1 flex flex-col items-center justify-center pt-2 pb-1.5 gap-0.5 relative touch-target"
               >
-                {/* Active circle background */}
-                <AnimatePresence>
-                  {active && (
-                    <motion.div
-                      layoutId="nav-active-pill"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={springConfig}
-                      className="absolute inset-0 m-auto w-11 h-11 rounded-full bg-primary"
-                      style={{ zIndex: 0 }}
-                    />
-                  )}
-                </AnimatePresence>
+                {/* Active indicator bar at top */}
+                {active && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary"
+                    transition={springConfig}
+                  />
+                )}
 
-                {/* Icon */}
                 <motion.div
-                  className="relative z-10 flex flex-col items-center"
-                  animate={{ scale: active ? 1.1 : 1 }}
+                  animate={{ scale: active ? 1.15 : 1 }}
                   transition={springConfig}
+                  className={`p-1.5 rounded-xl transition-colors ${active ? 'text-primary' : 'text-muted-foreground'}`}
                 >
                   <item.icon
                     size={22}
                     strokeWidth={active ? 2.5 : 1.8}
-                    className={`transition-colors duration-200 ${
-                      active ? 'text-primary-foreground' : 'text-muted-foreground'
-                    }`}
                   />
-                  {!active && (
-                    <span className="text-[8px] font-medium text-muted-foreground mt-0.5 leading-none">
-                      {isMoreBtn ? (isUrdu ? 'مزید' : 'More') : t(item.key)}
-                    </span>
-                  )}
                 </motion.div>
-              </motion.button>
+
+                {/* Label — ALWAYS visible */}
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {label}
+                </span>
+              </button>
             );
           })}
-        </motion.div>
+        </div>
       </nav>
     </>
   );

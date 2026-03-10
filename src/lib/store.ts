@@ -24,6 +24,7 @@ export interface Measurements {
   pocketType?: string;
   bottomType?: string;
   buttonType?: string;
+  customFields?: Record<string, string>;
 }
 
 export interface MeasurementRecord {
@@ -131,6 +132,7 @@ export const emptyMeasurements: Measurements = {
   kameezLength: '', chest: '', shoulder: '', sleeve: '', collar: '', teera: '', kamar: '', daman: '', cuff: '', frontPocket: '',
   shalwarLength: '', waist: '', hip: '', pancha: '', notes: '',
   kameezType: '', cuffType: '', pocketType: '', bottomType: '', buttonType: '',
+  customFields: {},
 };
 
 function normalizeSuit(s: Partial<OrderSuit> & { workerId?: string }, createdAt: string): OrderSuit {

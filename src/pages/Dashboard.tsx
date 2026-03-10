@@ -3,20 +3,16 @@ import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { getDeadlineStatus, getWorkerEarnings, getWorkerSuitsCount, type Order, type OrderSuit } from '@/lib/store';
 import { useNavigate } from 'react-router-dom';
-import { Users, ClipboardList, Wrench, Ruler, DollarSign, Package, BarChart3, Settings2, Globe, AlertTriangle, Clock, CalendarClock, Timer, Banknote } from 'lucide-react';
+import { Users, ClipboardList, Wrench, DollarSign, Package, AlertTriangle, Clock, CalendarClock, Timer, Banknote } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const quickLinks = [
   { path: '/customers', icon: Users, key: 'nav.customers', color: 'bg-primary/10 text-primary' },
   { path: '/orders', icon: ClipboardList, key: 'nav.orders', color: 'bg-info/10 text-info' },
-  { path: '/measurements', icon: Ruler, key: 'nav.measurements', color: 'bg-accent/10 text-accent' },
+  { path: '/payments', icon: DollarSign, key: 'nav.payments', color: 'bg-success/10 text-success' },
   { path: '/workers', icon: Wrench, key: 'nav.workers', color: 'bg-warning/10 text-warning' },
-  { path: '/payments', icon: DollarSign, key: 'nav.payments', color: 'bg-destructive/10 text-destructive' },
-  { path: '/ready', icon: Package, key: 'nav.ready', color: 'bg-success/10 text-success' },
-  { path: '/reports', icon: BarChart3, key: 'nav.reports', color: 'bg-info/10 text-info' },
-  { path: '/portal', icon: Globe, key: 'nav.portal', color: 'bg-primary/10 text-primary' },
-  { path: '/settings', icon: Settings2, key: 'nav.settings', color: 'bg-muted text-muted-foreground' },
 ];
+
 
 function getDateOnly(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());

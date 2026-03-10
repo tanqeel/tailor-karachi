@@ -358,7 +358,7 @@ export default function Orders() {
               <h2 className="font-bold text-lg">{editingOrder ? t('common.edit') : t('order.new')}</h2>
               <button onClick={() => setShowForm(false)} className="p-2 touch-target"><X size={20} /></button>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 pb-28">
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('nav.customers')} *</label>
                 <select value={customerId} onChange={e => setCustomerId(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 touch-target">

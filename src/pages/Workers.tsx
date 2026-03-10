@@ -259,7 +259,7 @@ export default function Workers() {
               <h2 className="font-bold text-lg">{editing ? t('common.edit') : t('common.add')} {t('nav.workers')}</h2>
               <button onClick={() => setShowForm(false)} className="p-2 touch-target"><X size={20} /></button>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 pb-28">
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t('worker.name')} *</label>
                 <VoiceInput value={name} onChange={setName} />
@@ -283,8 +283,8 @@ export default function Workers() {
                           setRole(next.join(','));
                         }}
                         className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors touch-target ${selected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
                           }`}
                       >
                         {r.emoji} {isUrdu ? r.ur : r.en}
@@ -568,8 +568,8 @@ export default function Workers() {
                                 key={s}
                                 onClick={() => changeSuitStatus(item.orderId, item.suitId, s)}
                                 className={`px-2 py-1 rounded-lg text-[9px] font-semibold transition-colors active:scale-95 ${s === item.status
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-muted-foreground'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground'
                                   }`}
                               >
                                 {t(`status.${s}`)}

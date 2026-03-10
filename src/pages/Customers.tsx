@@ -79,27 +79,89 @@ const getMeasurementFields = (t: (k: string) => string, isUrdu: boolean): { sect
 
 function MeasurementForm({ measurements, onChange, t, isUrdu }: { measurements: Measurements; onChange: (m: Measurements) => void; t: (k: string) => string; isUrdu: boolean }) {
   const fields = getMeasurementFields(t, isUrdu);
+  const [customKey, setCustomKey] = useState('');
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  const toggleOption = (key: string, value: string) => {
+    const current = String((measurements as any)[key] || '');
+    const parts = current.split(',').map(p => p.trim()).filter(Boolean);
+    const index = parts.indexOf(value);
+
+    if (index > -1) {
+      parts.splice(index, 1);
+    } else {
+      parts.push(value);
+    }
+
+    onChange({ ...measurements, [key]: parts.join(', ') });
+  };
+
+  const addCustomField = (sectionName: string) => {
+    if (!customKey.trim()) return;
+    const key = `custom_${sectionName}_${customKey.trim().toLowerCase().replace(/\s+/g, '_')}`;
+    const nextCustom = { ...(measurements.customFields || {}), [key]: '' };
+    onChange({ ...measurements, customFields: nextCustom });
+    setCustomKey('');
+    setActiveSection(null);
+  };
+
+  const removeCustomField = (key: string) => {
+    const nextCustom = { ...measurements.customFields };
+    delete nextCustom[key];
+    onChange({ ...measurements, customFields: nextCustom });
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28">
       {fields.map(section => (
         <div key={section.section} className="bg-card/50 rounded-xl p-3 border border-border">
-          <h4 className="font-semibold text-sm mb-3 text-primary">{section.section}</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-semibold text-sm text-primary">{section.section}</h4>
+            <button
+              type="button"
+              onClick={() => setActiveSection(activeSection === section.section ? null : section.section)}
+              className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-md font-bold"
+            >
+              + {isUrdu ? 'نیا فیلڈ' : 'Field'}
+            </button>
+          </div>
+
+          {activeSection === section.section && (
+            <div className="mb-3 flex gap-2 p-2 bg-muted/30 rounded-lg border border-dashed border-border">
+              <input
+                value={customKey}
+                onChange={e => setCustomKey(e.target.value)}
+                placeholder={isUrdu ? 'نام لکھیں...' : 'Field name...'}
+                className="flex-1 text-xs bg-background border border-border rounded-lg px-2 py-1.5 focus:outline-none"
+                onKeyDown={e => e.key === 'Enter' && addCustomField(section.section)}
+              />
+              <button
+                type="button"
+                onClick={() => addCustomField(section.section)}
+                className="text-[10px] bg-primary text-primary-foreground px-3 rounded-lg font-bold"
+              >
+                {isUrdu ? 'شامل کریں' : 'Add'}
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             {section.items.map(item => {
-              const val = String((measurements as unknown as Record<string, string>)[item.key] || '');
+              const val = String((measurements as any)[item.key] || '');
 
               if (item.options) {
+                const selectedParts = val.split(',').map(p => p.trim()).filter(Boolean);
                 return (
                   <div key={item.key} className="col-span-2 space-y-1.5 mt-1 border-t border-border/50 pt-3">
                     <label className="text-xs font-semibold text-muted-foreground">{item.label}</label>
                     <div className="flex flex-wrap gap-2">
                       {item.options.map(opt => {
-                        const isSelected = val === opt.value;
+                        const isSelected = selectedParts.includes(opt.value);
                         return (
                           <button
                             key={opt.value}
                             type="button"
-                            onClick={() => onChange({ ...measurements, [item.key]: isSelected ? '' : opt.value })}
+                            onClick={() => toggleOption(item.key, opt.value)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors touch-target ${isSelected
                               ? 'bg-primary text-primary-foreground shadow-md'
                               : 'bg-muted text-muted-foreground border border-border hover:bg-muted/80'
@@ -128,6 +190,34 @@ function MeasurementForm({ measurements, onChange, t, isUrdu }: { measurements: 
                 </div>
               );
             })}
+
+            {/* Custom Fields for this section */}
+            {Object.entries(measurements.customFields || {})
+              .filter(([key]) => key.startsWith(`custom_${section.section}_`))
+              .map(([key, value]) => (
+                <div key={key} className="relative">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-muted-foreground truncate pr-4">
+                      {key.split(`custom_${section.section}_`)[1].replace(/_/g, ' ')}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => removeCustomField(key)}
+                      className="absolute right-0 top-0 text-muted-foreground hover:text-destructive p-1"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                  <VoiceInput
+                    type="text"
+                    value={value}
+                    onChange={v => onChange({ ...measurements, customFields: { ...measurements.customFields, [key]: v } })}
+                    className="!px-3 !py-3 !rounded-xl !bg-background !border-border text-sm"
+                    placeholder="—"
+                  />
+                </div>
+              ))
+            }
           </div>
         </div>
       ))}
