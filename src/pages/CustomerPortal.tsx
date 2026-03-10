@@ -183,7 +183,7 @@ export default function CustomerPortal() {
             })}
           </div>
         )}
-        {trackResult?.error && (
+        {trackResult && 'error' in trackResult && (
           <div className="mt-4 text-center py-6">
             <p className="text-destructive font-semibold text-sm">{isUrdu ? 'کسٹمر نہیں ملا' : 'Customer not found'}</p>
             <p className="text-xs text-muted-foreground mt-1">{isUrdu ? 'آئی ڈی یا فون چیک کریں' : 'Check your ID or phone'}</p>

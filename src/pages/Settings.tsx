@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLang } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import { exportBackup } from '@/lib/store';
@@ -22,9 +22,23 @@ export default function Settings() {
   const [showBackups, setShowBackups] = useState(false);
   const [showClear, setShowClear] = useState(false);
   const [activeSection, setActiveSection] = useState<'main' | 'shop' | 'gallery' | 'prices' | 'reviews' | 'backup'>('main');
-  const [backups, setBackups] = useState<BackupInfo[]>(() => listBackups());
-  const [autoBackup, setAutoBackup] = useState(isAutoBackupEnabled);
-  const lastBackup = getLastBackupTime();
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [autoBackup, setAutoBackup] = useState(true);
+  const [lastBackup, setLastBackup] = useState<string | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      const [blist, ae, lbt] = await Promise.all([
+        listBackups(),
+        isAutoBackupEnabled(),
+        getLastBackupTime()
+      ]);
+      setBackups(blist);
+      setAutoBackup(ae);
+      setLastBackup(lbt);
+    };
+    init();
+  }, []);
   const theme = useTheme();
   const { logout } = useAuth();
   const themeValue = theme.theme || 'system';
@@ -54,10 +68,13 @@ export default function Settings() {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    importBackupFromFile(file).then(imported => {
+    importBackupFromFile(file).then(async imported => {
       if (imported) {
         setData(imported);
         toast.success(isUrdu ? 'بیک اپ بحال ہو گیا!' : 'Backup restored successfully!');
+        // Refresh backups list
+        const blist = await listBackups();
+        setBackups(blist);
       } else {
         toast.error(isUrdu ? 'غلط فائل فارمیٹ' : 'Invalid backup file format');
       }
@@ -65,8 +82,8 @@ export default function Settings() {
     e.target.value = '';
   };
 
-  const handleRestore = (key: string) => {
-    const restored = restoreBackup(key);
+  const handleRestore = async (key: string) => {
+    const restored = await restoreBackup(key);
     if (restored) {
       setData(restored);
       toast.success(isUrdu ? 'بیک اپ بحال ہو گیا!' : 'Backup restored!');
@@ -74,22 +91,26 @@ export default function Settings() {
     }
   };
 
-  const handleManualBackup = () => {
-    performManualBackup(data);
-    setBackups(listBackups());
+  const handleManualBackup = async () => {
+    await performManualBackup(data);
+    const blist = await listBackups();
+    const lbt = await getLastBackupTime();
+    setBackups(blist);
+    setLastBackup(lbt);
     toast.success(isUrdu ? 'بیک اپ بنایا گیا!' : 'Manual backup created!');
   };
 
-  const handleDeleteBackup = (key: string) => {
-    deleteBackup(key);
-    setBackups(listBackups());
+  const handleDeleteBackup = async (key: string) => {
+    await deleteBackup(key);
+    const blist = await listBackups();
+    setBackups(blist);
     toast.success(isUrdu ? 'بیک اپ حذف ہو گیا' : 'Backup deleted');
   };
 
-  const handleToggleAutoBackup = () => {
+  const handleToggleAutoBackup = async () => {
     const next = !autoBackup;
     setAutoBackup(next);
-    setAutoBackupEnabled(next);
+    await setAutoBackupEnabled(next);
     toast.success(next
       ? (isUrdu ? 'خودکار بیک اپ فعال' : 'Auto backup enabled')
       : (isUrdu ? 'خودکار بیک اپ غیر فعال' : 'Auto backup disabled')

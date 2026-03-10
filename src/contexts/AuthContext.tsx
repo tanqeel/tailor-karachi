@@ -1,4 +1,4 @@
-﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   clearAuthSession,
   DEFAULT_AUTH_SETTINGS,
@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setupAuth = useCallback(async (payload: SetupPayload) => {
-    const enabledMethods = payload.enabledMethods.length > 0 ? payload.enabledMethods : ['phone_password'];
+    const enabledMethods = payload.enabledMethods.length > 0 ? payload.enabledMethods : ['phone_password' as AuthMethod];
     const nextSettings: AuthSettings = {
       phoneNumber: payload.phoneNumber.trim(),
       passwordHash: payload.password ? await hashSecret(payload.password) : '',

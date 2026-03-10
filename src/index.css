@@ -109,6 +109,20 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent text selection for a native app feel */
+    -webkit-user-select: none;
+    user-select: none;
+    /* Prevent default long-press context menu on iOS */
+    -webkit-touch-callout: none;
+    /* Safe area padding for notches */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  /* Allow selection in inputs and textareas */
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   /* Smooth scrolling */
   html { scroll-behavior: smooth; }
