@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
     X, Sun, Moon, Monitor, Languages, Download, Upload,
-    Settings2, Store, Palette, LogOut,
+    Settings2, Store, Palette, LogOut, RefreshCw, Check
 } from 'lucide-react';
 
 const ACCENT_KEY = 'kt-custom-accent';
@@ -161,8 +161,8 @@ export default function HamburgerMenu() {
                                                 key={opt.value}
                                                 onClick={() => setTheme(opt.value)}
                                                 className={`flex flex-col items-center gap-2 py-3 rounded-xl border-2 transition-colors text-xs font-semibold ${theme === opt.value
-                                                        ? 'border-primary bg-primary/10 text-primary'
-                                                        : 'border-border bg-background text-muted-foreground hover:border-primary/40'
+                                                    ? 'border-primary bg-primary/10 text-primary'
+                                                    : 'border-border bg-background text-muted-foreground hover:border-primary/40'
                                                     }`}
                                             >
                                                 <opt.icon size={18} />
@@ -272,6 +272,22 @@ export default function HamburgerMenu() {
                                             {isUrdu ? 'کسٹمر پورٹل' : 'Customer Portal'}
                                         </button>
                                     </div>
+                                </section>
+
+                                {/* Update */}
+                                <section>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        <RefreshCw size={13} /> {isUrdu ? 'اپ ڈیٹ' : 'Update'}
+                                    </p>
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-background hover:bg-muted transition"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <RefreshCw size={16} className="text-primary" />
+                                            <span className="text-sm font-medium">{isUrdu ? 'اپ ڈیٹ چیک کریں' : 'Check for Update'}</span>
+                                        </div>
+                                    </button>
                                 </section>
                             </div>
 

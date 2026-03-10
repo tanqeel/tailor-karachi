@@ -13,6 +13,7 @@ import TopBar from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import InstallPrompt from "@/components/InstallPrompt";
 import AuthGate from "@/components/AuthGate";
+import PWAUpdater from "@/components/PWAUpdater";
 import Dashboard from "@/pages/Dashboard";
 import Customers from "@/pages/Customers";
 import Orders from "@/pages/Orders";
@@ -60,6 +61,7 @@ function StaffShell() {
         </main>
         <BottomNav />
         <InstallPrompt />
+        <PWAUpdater />
       </div>
     </AuthGate>
   );
